@@ -1183,7 +1183,7 @@ mark { background: rgba(245,158,11,0.3); color: inherit; border-radius: 2px; }
                   <div id="charts-row">
                     <div class="chart-card">
                       <div class="chart-title">📊 Sub-System Distribution</div>
-                      <canvas id="donut-canvas" width="560" height="280" style="width:100%;height:auto;max-height:280px"></canvas>
+                      <canvas id="donut-canvas" width="560" height="300" style="width:100%;height:auto;max-height:300px"></canvas>
                       <div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding-bottom:6px">Click segment to filter · hover to inspect</div>
                     </div>
                     <div class="chart-card">
@@ -1957,10 +1957,10 @@ function renderDonutChart() {
   if (!entries.length) return;
 
   // Layout
-  const cx = 110;
-  const cy = 140;
-  const R = 100;
-  const r = R * 0.55;
+  const cx = 120;
+  const cy = 150;
+  const R = 108;
+  const r = Math.round(R * 0.52);
 
   // Build segments
   let angle = -Math.PI / 2;
@@ -2055,39 +2055,13 @@ function renderDonutChart() {
       ctx.fillText('total', cx, cy + 22);
     }
 
-    // Segment labels for big segments (>8%) — only after animation completes
-    if (p > 0.95) {
-      segments.forEach((s) => {
-        const sweep = s.end - s.start;
-        const pctSeg = sweep / (2 * Math.PI);
-        if (pctSeg < 0.08) return;
-        const mid = (s.start + s.end) / 2;
-        const labelR = R + 18;
-        const lx = cx + Math.cos(mid) * labelR;
-        const ly = cy + Math.sin(mid) * labelR;
-        const endX = cx + Math.cos(mid) * (R + 8);
-        const endY = cy + Math.sin(mid) * (R + 8);
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-        ctx.lineTo(lx, ly);
-        ctx.strokeStyle = s.color;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = textSec;
-        ctx.font = '9px Inter, sans-serif';
-        ctx.textAlign = lx > cx ? 'left' : 'right';
-        const short = s.label.length > 10 ? s.label.slice(0, 9) + '…' : s.label;
-        ctx.fillText(short, lx + (lx > cx ? 3 : -3), ly + 3);
-      });
-    }
-
     // Legend (right side)
-    const legendX = cx * 2 + 20;
-    const legendStartY = 20;
-    const rowH = 24;
+    const legendX = 252;
+    const legendStartY = 18;
+    const rowH = 26;
     const swatchSize = 12;
     const colGap = 8;
-    const countColX = W - 10;
+    const countColX = W - 6;
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'left';
 
@@ -2104,9 +2078,10 @@ function renderDonutChart() {
       const short = label.length > 16 ? label.slice(0, 15) + '…' : label;
       const pct = Math.round((count / total) * 100);
       const labelX = legendX + swatchSize + colGap;
-      const barX = labelX + maxLabelW + 4;
-      const barW = Math.max(0, countColX - labelX - maxLabelW - 12);
-      const fillW = Math.round(barW * count / total);
+      const barX = labelX + maxLabelW + 6;
+      const barAvailW = countColX - barX - 62;
+      const barW = Math.max(0, barAvailW);
+      const fillW = barW > 8 ? Math.round(barW * count / total) : 0;
 
       ctx.fillStyle = PALETTE[i % PALETTE.length];
       if (typeof ctx.roundRect === 'function') {
@@ -2122,10 +2097,12 @@ function renderDonutChart() {
       ctx.textAlign = 'left';
       ctx.fillText(short, labelX, y);
 
-      ctx.fillStyle = themeVar('--border', '#e5e7eb');
-      ctx.fillRect(barX, y + 3, barW, 3);
-      ctx.fillStyle = PALETTE[i % PALETTE.length];
-      ctx.fillRect(barX, y + 3, fillW, 3);
+      if (barW >= 20) {
+        ctx.fillStyle = themeVar('--border', '#e5e7eb');
+        ctx.fillRect(barX, y + 4, barW, 3);
+        ctx.fillStyle = PALETTE[i % PALETTE.length];
+        ctx.fillRect(barX, y + 4, fillW, 3);
+      }
 
       ctx.fillStyle = textMuted;
       ctx.font = '11px Inter, sans-serif';
