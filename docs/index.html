@@ -264,7 +264,7 @@ body {
 #charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .chart-card {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); min-height: 200px;
 }
 .chart-card::before {
   content: ''; display: block; height: 4px;
@@ -706,38 +706,38 @@ mark { background: rgba(245,158,11,0.3); color: inherit; border-radius: 2px; }
 
           <nav id="nav" role="navigation" aria-label="Main navigation">
             <a class="logo" href="#" aria-label="RDK-B Component List Home">
-              <div class="logo-icon">📡</div>
+              <div class="logo-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg></div>
               <span class="logo-text">RDK-B Component List 2026</span>
             </a>
             <div class="spacer"></div>
-            <button class="nav-btn" id="cmd-btn" aria-label="Command palette (Ctrl+K)">⌘ <span>Ctrl+K</span></button>
-            <button class="nav-btn" id="export-csv-btn" aria-label="Export CSV">📥 <span>CSV</span></button>
-            <button class="nav-btn" id="export-json-btn" aria-label="Export JSON">📄 <span>JSON</span></button>
-            <button class="nav-btn" id="copy-url-btn" aria-label="Copy URL">🔗 <span>Share</span></button>
-            <button class="nav-btn" id="print-btn" aria-label="Print">🖨️</button>
-            <button class="nav-btn" id="dark-toggle" aria-label="Toggle dark mode">🌙</button>
+            <button class="nav-btn" id="cmd-btn" aria-label="Command palette (Ctrl+K)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> <span>Ctrl+K</span></button>
+            <button class="nav-btn" id="export-csv-btn" aria-label="Export CSV"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> <span>CSV</span></button>
+            <button class="nav-btn" id="export-json-btn" aria-label="Export JSON"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> <span>JSON</span></button>
+            <button class="nav-btn" id="copy-url-btn" aria-label="Copy URL"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> <span>Share</span></button>
+            <button class="nav-btn" id="print-btn" aria-label="Print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+            <button class="nav-btn" id="dark-toggle" aria-label="Toggle dark mode"><svg id="dark-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
           </nav>
 
           <div id="app">
             <aside id="sidebar" role="complementary" aria-label="Sidebar">
               <div class="sidebar-section">
-                <div class="sidebar-title">Workbook</div>
+                <div class="sidebar-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Workbook</div>
                 <div id="sidebar-workbook-summary"></div>
               </div>
               <div class="sidebar-section">
-                <div class="sidebar-title">Sheets</div>
+                <div class="sidebar-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M12 3v6"/><path d="M5 8h14"/><path d="M4 14h16"/><path d="M10 14v7"/><path d="M14 14v7"/></svg>Sheets</div>
                 <div id="sidebar-sheet-list" class="sidebar-list"></div>
               </div>
               <div class="sidebar-section">
-                <div class="sidebar-title">Quick Actions</div>
+                <div class="sidebar-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Quick Actions</div>
                 <div id="sidebar-quick-filters" class="sidebar-actions"></div>
               </div>
               <div class="sidebar-section">
-                <div class="sidebar-title">Active View</div>
+                <div class="sidebar-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Active View</div>
                 <div id="sidebar-active-filters"></div>
               </div>
               <div class="sidebar-section">
-                <div class="sidebar-title">Tips</div>
+                <div class="sidebar-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.75c.61.43 1 1.12 1 1.88V18h6v-1.37c0-.76.39-1.45 1-1.88A7 7 0 0 0 12 2z"/></svg>Tips</div>
                 <div class="sidebar-legend">
                   <div class="legend-item"><span class="legend-dot" style="background:var(--brand-teal)"></span><span>Shift-click headers for multi-sort.</span></div>
                   <div class="legend-item"><span class="legend-dot" style="background:var(--accent-amber)"></span><span>Select 2+ rows to open compare mode.</span></div>
@@ -768,12 +768,14 @@ mark { background: rgba(245,158,11,0.3); color: inherit; border-radius: 2px; }
 
                   <div id="charts-row">
                     <div class="chart-card">
-                      <div class="chart-title">Sub-System Distribution</div>
-                      <canvas id="donut-canvas" width="420" height="220"></canvas>
+                      <div class="chart-title">📊 Sub-System Distribution</div>
+                      <canvas id="donut-canvas" width="500" height="320" style="width:100%;height:auto;max-height:320px"></canvas>
+                      <div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding-bottom:6px">Click segment to filter · hover to inspect</div>
                     </div>
                     <div class="chart-card">
-                      <div class="chart-title">Rows per Sheet</div>
-                      <canvas id="bar-canvas" width="360" height="140"></canvas>
+                      <div class="chart-title">📈 Profile Comparison</div>
+                      <canvas id="bar-canvas" width="400" height="180" style="width:100%;height:auto;max-height:180px"></canvas>
+                      <div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding-bottom:6px">Click bar to switch sheet</div>
                     </div>
                   </div>
 
@@ -850,7 +852,11 @@ const state = {
   globalSearch: false,
 };
 
-const PALETTE = ['#0f8b8d','#f59e0b','#10b981','#6366f1','#f43f5e','#8b5cf6','#06b6d4','#84cc16'];
+const PALETTE = [
+  '#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444',
+  '#06b6d4','#f97316','#84cc16','#ec4899','#14b8a6',
+  '#6366f1','#a855f7'
+];
 let cmdItems = [];
 let cmdSelected = 0;
 
@@ -878,7 +884,7 @@ function initTheme() {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const theme = stored || (prefersDark ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', theme);
-  document.getElementById('dark-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+  updateDarkToggleIcon(theme);
 }
 
 function toggleTheme() {
@@ -886,9 +892,19 @@ function toggleTheme() {
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
-  document.getElementById('dark-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+  updateDarkToggleIcon(next);
   renderCharts();
   toast('Switched to ' + next + ' mode');
+}
+
+function updateDarkToggleIcon(theme) {
+  const btn = document.getElementById('dark-toggle');
+  if (!btn) return;
+  if (theme === 'dark') {
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  } else {
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  }
 }
 
 // ===== Data Loading =====
@@ -1150,10 +1166,11 @@ function getTopColumnValues(colIdx, limit) {
 function renderStats() {
   const sheet = getActiveSheet();
   const rows = sheet.rows;
+  const accentColors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'];
   const cards = [
-    { label: 'Total Rows', value: rows.length, sub: 'data rows' },
-    { label: 'Columns', value: sheet.headers.length, sub: 'fields' },
-    { label: 'Sheet', value: state.activeSheet + 1, sub: 'of ' + state.sheets.length },
+    { label: 'Total Rows', value: rows.length, sub: 'data rows', accent: accentColors[0] },
+    { label: 'Columns', value: sheet.headers.length, sub: 'fields', accent: accentColors[1] },
+    { label: 'Sheet', value: state.activeSheet + 1, sub: 'of ' + state.sheets.length, accent: accentColors[2] },
   ];
 
   let filled = 0;
@@ -1162,14 +1179,16 @@ function renderStats() {
     total += 1;
     if (c && c.toString().trim()) filled += 1;
   }));
-  cards.push({ label: 'Fill Rate', value: Math.round((filled / Math.max(total, 1)) * 100) + '%', sub: filled + '/' + total + ' cells' });
+  cards.push({ label: 'Fill Rate', value: Math.round((filled / Math.max(total, 1)) * 100) + '%', sub: filled + '/' + total + ' cells', accent: accentColors[3] });
 
   const container = document.getElementById('stat-cards');
   container.innerHTML = '';
   cards.forEach(c => {
     const div = document.createElement('div');
     div.className = 'stat-card';
-    div.innerHTML = `<div class="stat-label">${c.label}</div><div class="stat-value" data-target="${c.value}">${c.value}</div><div class="stat-sub">${c.sub}</div>`;
+    div.style.borderLeftColor = c.accent;
+    div.style.cssText += `--card-accent: ${c.accent};`;
+    div.innerHTML = `<div class="stat-label">${c.label}</div><div class="stat-value" style="background:linear-gradient(135deg,${c.accent},${c.accent}99);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" data-target="${c.value}">${c.value}</div><div class="stat-sub">${c.sub}</div>`;
     container.appendChild(div);
   });
   animateCounters();
@@ -1315,24 +1334,33 @@ function renderDonutChart() {
   const ssIdx = findSubsystemIndex(sheet);
   if (ssIdx < 0) {
     ctx.fillStyle = themeVar('--text-muted', '#64748b');
-    ctx.font = '12px Inter, sans-serif';
-    ctx.fillText('No Sub-System column', 12, 24);
+    ctx.font = '13px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('No Sub-System column found', 12, 28);
     return;
   }
 
+  // Forward-fill Sub-System column
+  let lastSeen = '';
   const counts = {};
   sheet.rows.forEach(r => {
-    const v = (r[ssIdx] || 'Unknown').toString();
-    counts[v] = (counts[v] || 0) + 1;
+    const v = (r[ssIdx] || '').toString().trim();
+    if (v) lastSeen = v;
+    const key = lastSeen || 'Unknown';
+    counts[key] = (counts[key] || 0) + 1;
   });
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s, [, v]) => s + v, 0);
   if (!entries.length) return;
 
-  const cx = W / 2 - 40;
+  // Layout
+  const legendW = 170;
+  const cx = (W - legendW) / 2;
   const cy = H / 2;
-  const R = Math.min(cx, cy) - 20;
-  const r = R * 0.55;
+  const R = Math.min(cx - 10, cy - 20);
+  const r = R * 0.52;
+
+  // Build segments
   let angle = -Math.PI / 2;
 
   const segments = entries.map(([label, count], i) => {
@@ -1343,50 +1371,198 @@ function renderDonutChart() {
     return { label, count, start, end, color: PALETTE[i % PALETTE.length] };
   });
 
-  segments.forEach(s => {
+  // Animation state
+  if (!canvas._animState || canvas._animVersion !== sheet.name) {
+    canvas._animState = { progress: 0, hoveredIdx: -1 };
+    canvas._animVersion = sheet.name;
+  }
+  const anim = canvas._animState;
+
+  function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+  function draw(progress) {
+    ctx.clearRect(0, 0, W, H);
+    const bgCard = themeVar('--bg-card', '#fff');
+    const textPrimary = themeVar('--text-primary', '#0f172a');
+    const textMuted = themeVar('--text-muted', '#64748b');
+    const textSec = themeVar('--text-secondary', '#475569');
+
+    const p = Math.min(progress, 1);
+    let drawnAngle = -Math.PI / 2;
+
+    segments.forEach((s, i) => {
+      const sweep = s.end - s.start;
+      const visEnd = s.start + sweep * p;
+      if (visEnd <= s.start) return;
+
+      const isHovered = anim.hoveredIdx === i;
+      let ox = 0, oy = 0;
+      if (isHovered) {
+        const mid = (s.start + visEnd) / 2;
+        ox = Math.cos(mid) * 8;
+        oy = Math.sin(mid) * 8;
+      }
+
+      // Gradient fill
+      const midAngle = (s.start + visEnd) / 2;
+      const gx1 = cx + ox + Math.cos(midAngle) * r;
+      const gy1 = cy + oy + Math.sin(midAngle) * r;
+      const gx2 = cx + ox + Math.cos(midAngle) * R;
+      const gy2 = cy + oy + Math.sin(midAngle) * R;
+      const grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+      const baseColor = s.color;
+      grad.addColorStop(0, baseColor + 'cc');
+      grad.addColorStop(1, baseColor);
+
+      ctx.beginPath();
+      ctx.moveTo(cx + ox, cy + oy);
+      ctx.arc(cx + ox, cy + oy, R, s.start, visEnd);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = bgCard;
+      ctx.lineWidth = isHovered ? 3 : 2;
+      ctx.stroke();
+    });
+
+    // Center hole
     ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, R, s.start, s.end);
-    ctx.closePath();
-    ctx.fillStyle = s.color;
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.fillStyle = bgCard;
     ctx.fill();
-    ctx.strokeStyle = themeVar('--bg-card', '#fff');
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  });
 
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  ctx.fillStyle = themeVar('--bg-card', '#fff');
-  ctx.fill();
+    // Center text
+    ctx.textAlign = 'center';
+    if (anim.hoveredIdx >= 0 && anim.hoveredIdx < segments.length) {
+      const hs = segments[anim.hoveredIdx];
+      const pct = Math.round((hs.count / total) * 100);
+      ctx.fillStyle = hs.color;
+      ctx.font = 'bold 20px Inter, sans-serif';
+      ctx.fillText(hs.count, cx, cy - 4);
+      ctx.fillStyle = textMuted;
+      ctx.font = '10px Inter, sans-serif';
+      const short = hs.label.length > 14 ? hs.label.slice(0, 13) + '…' : hs.label;
+      ctx.fillText(short, cx, cy + 11);
+      ctx.fillText(pct + '%', cx, cy + 24);
+    } else {
+      ctx.fillStyle = textPrimary;
+      ctx.font = 'bold 22px Inter, sans-serif';
+      ctx.fillText(total, cx, cy + 6);
+      ctx.fillStyle = textMuted;
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText('total', cx, cy + 22);
+    }
 
-  ctx.fillStyle = themeVar('--text-primary', '#0f172a');
-  ctx.font = 'bold 18px Inter, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(total, cx, cy + 6);
-  ctx.font = '11px Inter, sans-serif';
-  ctx.fillStyle = themeVar('--text-muted', '#64748b');
-  ctx.fillText('total', cx, cy + 20);
+    // Segment labels for big segments (>8%) — only after animation completes
+    if (p > 0.95) {
+      segments.forEach((s) => {
+        const sweep = s.end - s.start;
+        const pctSeg = sweep / (2 * Math.PI);
+        if (pctSeg < 0.08) return;
+        const mid = (s.start + s.end) / 2;
+        const labelR = R + 18;
+        const lx = cx + Math.cos(mid) * labelR;
+        const ly = cy + Math.sin(mid) * labelR;
+        const endX = cx + Math.cos(mid) * (R + 8);
+        const endY = cy + Math.sin(mid) * (R + 8);
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(lx, ly);
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = textSec;
+        ctx.font = '9px Inter, sans-serif';
+        ctx.textAlign = lx > cx ? 'left' : 'right';
+        const short = s.label.length > 10 ? s.label.slice(0, 9) + '…' : s.label;
+        ctx.fillText(short, lx + (lx > cx ? 3 : -3), ly + 3);
+      });
+    }
 
-  const lx = W - 130;
-  ctx.textAlign = 'left';
-  entries.forEach(([label, count], i) => {
-    const ly = 20 + i * 20;
-    ctx.fillStyle = PALETTE[i % PALETTE.length];
-    ctx.fillRect(lx, ly - 8, 12, 12);
-    ctx.fillStyle = themeVar('--text-secondary', '#475569');
-    ctx.font = '10px Inter, sans-serif';
-    const short = label.length > 14 ? label.slice(0, 13) + '…' : label;
-    ctx.fillText(`${short} (${count})`, lx + 16, ly);
-  });
+    // Legend (right side)
+    const lx0 = W - legendW + 8;
+    ctx.textAlign = 'left';
+    const itemH = Math.min(22, (H - 10) / entries.length);
+    entries.forEach(([label, count], i) => {
+      const ly = 8 + i * itemH;
+      if (ly + itemH > H) return;
+      const isHov = anim.hoveredIdx === i;
+      // Color square
+      ctx.fillStyle = PALETTE[i % PALETTE.length];
+      ctx.fillRect(lx0, ly + 2, 10, 10);
+      // Label
+      ctx.fillStyle = isHov ? PALETTE[i % PALETTE.length] : textSec;
+      ctx.font = isHov ? 'bold 9.5px Inter, sans-serif' : '9.5px Inter, sans-serif';
+      const short = label.length > 16 ? label.slice(0, 15) + '…' : label;
+      ctx.fillText(short, lx0 + 14, ly + 11);
+      // Count
+      ctx.fillStyle = textMuted;
+      ctx.font = '8.5px Inter, sans-serif';
+      ctx.fillText(count, lx0 + 14, ly + itemH - 2);
+      // Mini progress bar
+      const barW = legendW - 28;
+      ctx.fillStyle = themeVar('--border', '#e5e7eb');
+      ctx.fillRect(lx0 + 14, ly + itemH - 1, barW, 2);
+      ctx.fillStyle = PALETTE[i % PALETTE.length];
+      ctx.fillRect(lx0 + 14, ly + itemH - 1, Math.round((count / total) * barW), 2);
+    });
+  }
 
+  // Animate
+  if (anim.progress < 1) {
+    let start = null;
+    function animate(ts) {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      anim.progress = Math.min(elapsed / 700, 1);
+      draw(ease(anim.progress));
+      if (anim.progress < 1) requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+  } else {
+    draw(1);
+  }
+
+  // Hover
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    const mx = x - cx, my = y - cy;
+    const dist = Math.sqrt(mx * mx + my * my);
+    let hovered = -1;
+    if (dist >= r && dist <= R) {
+      let a = Math.atan2(my, mx);
+      if (a < -Math.PI / 2) a += 2 * Math.PI;
+      hovered = segments.findIndex(sg => a >= sg.start && a <= sg.end);
+    }
+    if (hovered !== anim.hoveredIdx) {
+      anim.hoveredIdx = hovered;
+      canvas.style.cursor = hovered >= 0 ? 'pointer' : 'default';
+      draw(1);
+    }
+  };
+
+  canvas.onmouseleave = () => {
+    if (anim.hoveredIdx !== -1) {
+      anim.hoveredIdx = -1;
+      canvas.style.cursor = 'default';
+      draw(1);
+    }
+  };
+
+  // Store segments for click
   canvas._segments = segments.map(s => ({ ...s, cx, cy, R, r, colIdx: ssIdx }));
+
   canvas.onclick = (e) => {
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const mx = x - cx;
-    const my = y - cy;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    const mx = x - cx, my = y - cy;
     const dist = Math.sqrt(mx * mx + my * my);
     if (dist <= r || dist >= R) return;
 
@@ -1416,36 +1592,149 @@ function renderBarChart() {
     name: s.name,
     count: s.rows.length,
     color: PALETTE[i % PALETTE.length],
+    isActive: i === state.activeSheet,
   }));
   const maxVal = Math.max(...data.map(d => d.count), 1);
-  const barH = 28;
-  const gap = 10;
+  const barH = Math.min(28, Math.floor((H - 20) / data.length) - 6);
+  const gap = Math.min(8, Math.floor((H - 20 - data.length * barH) / Math.max(data.length - 1, 1)));
   const padL = 90;
-  const padR = 36;
-  const padT = 10;
+  const padR = 44;
+  const padT = 14;
 
-  data.forEach(({ name, count, color }, i) => {
-    const y = padT + i * (barH + gap);
-    const bw = Math.round((count / maxVal) * (W - padL - padR));
-    ctx.fillStyle = color;
-    if (typeof ctx.roundRect === 'function') {
+  // Grid lines
+  const textMuted = themeVar('--text-muted', '#64748b');
+  const gridColor = themeVar('--border', '#e5e7eb');
+  const gridSteps = 4;
+  for (let g = 0; g <= gridSteps; g++) {
+    const gx = padL + Math.round((g / gridSteps) * (W - padL - padR));
+    ctx.beginPath();
+    ctx.moveTo(gx, padT - 6);
+    ctx.lineTo(gx, padT + data.length * (barH + gap));
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (g > 0) {
+      ctx.fillStyle = textMuted;
+      ctx.font = '9px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(Math.round((g / gridSteps) * maxVal), gx, padT - 2);
+    }
+  }
+
+  // Animation
+  if (!canvas._barAnim || canvas._barAnimVersion !== state.sheets.map(s=>s.name).join(',')) {
+    canvas._barAnim = { progress: 0 };
+    canvas._barAnimVersion = state.sheets.map(s=>s.name).join(',');
+  }
+  const barAnim = canvas._barAnim;
+
+  function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+  function drawBars(progress) {
+    ctx.clearRect(0, 0, W, H);
+    // redraw grid
+    for (let g = 0; g <= gridSteps; g++) {
+      const gx = padL + Math.round((g / gridSteps) * (W - padL - padR));
       ctx.beginPath();
-      ctx.roundRect(padL, y, bw, barH, 4);
-      ctx.fill();
-    } else {
-      ctx.fillRect(padL, y, bw, barH);
+      ctx.moveTo(gx, padT - 6);
+      ctx.lineTo(gx, padT + data.length * (barH + gap));
+      ctx.strokeStyle = gridColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      if (g > 0) {
+        ctx.fillStyle = textMuted;
+        ctx.font = '9px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(Math.round((g / gridSteps) * maxVal), gx, padT - 2);
+      }
     }
 
-    ctx.fillStyle = themeVar('--text-secondary', '#475569');
-    ctx.font = '11px Inter, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(name, padL - 8, y + barH / 2 + 4);
+    data.forEach(({ name, count, color, isActive }, i) => {
+      const y = padT + i * (barH + gap);
+      const fullW = Math.max(2, Math.round((count / maxVal) * (W - padL - padR)));
+      const bw = Math.round(fullW * progress);
 
-    ctx.fillStyle = themeVar('--text-primary', '#0f172a');
-    ctx.textAlign = 'left';
-    ctx.font = 'bold 11px Inter, sans-serif';
-    ctx.fillText(count, Math.min(padL + bw + 6, W - 24), y + barH / 2 + 4);
-  });
+      // Gradient bar
+      const grad = ctx.createLinearGradient(padL, y, padL + bw, y);
+      grad.addColorStop(0, color + '99');
+      grad.addColorStop(1, color);
+      ctx.fillStyle = grad;
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(padL, y, bw, barH, 4);
+        ctx.fill();
+      } else {
+        ctx.fillRect(padL, y, bw, barH);
+      }
+
+      // Active sheet highlight
+      if (isActive) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        if (typeof ctx.roundRect === 'function') {
+          ctx.beginPath();
+          ctx.roundRect(padL, y, W - padL - padR, barH, 4);
+          ctx.stroke();
+        }
+      }
+
+      // Label (left)
+      const textSec = themeVar('--text-secondary', '#475569');
+      const textPrim = themeVar('--text-primary', '#0f172a');
+      ctx.fillStyle = isActive ? color : textSec;
+      ctx.font = isActive ? 'bold 11px Inter, sans-serif' : '11px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      const short = name.length > 12 ? name.slice(0, 11) + '…' : name;
+      ctx.fillText(short, padL - 6, y + barH / 2 + 4);
+
+      // Count (right)
+      if (progress > 0.5) {
+        ctx.fillStyle = textPrim;
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.fillText(count, Math.min(padL + bw + 5, W - padR + 2), y + barH / 2 + 4);
+      }
+    });
+  }
+
+  if (barAnim.progress < 1) {
+    let start = null;
+    function animate(ts) {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      barAnim.progress = Math.min(elapsed / 600, 1);
+      drawBars(ease(barAnim.progress));
+      if (barAnim.progress < 1) requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+  } else {
+    drawBars(1);
+  }
+
+  // Hover
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    const y = (e.clientY - rect.top) * scaleY;
+    let found = -1;
+    data.forEach((_, i) => {
+      const by = padT + i * (barH + gap);
+      if (y >= by && y <= by + barH) found = i;
+    });
+    canvas.style.cursor = found >= 0 ? 'pointer' : 'default';
+  };
+
+  canvas.onclick = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    const y = (e.clientY - rect.top) * scaleY;
+    data.forEach((d, i) => {
+      const by = padT + i * (barH + gap);
+      if (y >= by && y <= by + barH) {
+        switchSheet(i);
+      }
+    });
+  };
 }
 
 // ===== Table Rendering =====
@@ -1657,20 +1946,18 @@ function buildRow(d, visHeaders) {
       a.href = val;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.textContent = '🔗 Link';
+      a.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Link';
       td.appendChild(a);
     } else if (h.toLowerCase().includes('status') && val) {
       const badge = document.createElement('span');
+      const icons = { required: '✓', optional: '○', deprecated: '⊘' };
       const lower = val.toLowerCase();
-      const cls = lower.includes('required')
-        ? 'status-required'
-        : lower.includes('optional')
-          ? 'status-optional'
-          : lower.includes('deprecat')
-            ? 'status-deprecated'
-            : '';
+      const cls = lower.includes('required') ? 'status-required'
+        : lower.includes('optional') ? 'status-optional'
+        : lower.includes('deprecat') ? 'status-deprecated' : '';
       badge.className = cls ? `status-badge ${cls}` : 'status-badge';
-      badge.textContent = val;
+      const iconKey = lower.includes('required') ? 'required' : lower.includes('optional') ? 'optional' : lower.includes('deprecat') ? 'deprecated' : null;
+      badge.innerHTML = iconKey ? `<span style="margin-right:3px">${icons[iconKey]}</span>${escHtml(val)}` : escHtml(val);
       td.appendChild(badge);
     } else if (val.length > 80) {
       const span = document.createElement('span');
@@ -1925,21 +2212,21 @@ function renderGlobalSearch(q) {
 // ===== Command Palette =====
 function getCommandActions() {
   const sheetActions = state.sheets.map((s, i) => ({
-    icon: '📊',
+    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
     name: s.name + ' Sheet',
     desc: `${s.rows.length} rows · ${s.headers.length} columns`,
     action: () => switchSheet(i),
   }));
 
   const actionItems = [
-    { icon: '📥', name: 'Export CSV', desc: 'Download filtered data as CSV', action: exportCSV },
-    { icon: '📄', name: 'Export JSON', desc: 'Download workbook as JSON', action: exportJSON },
-    { icon: '🔗', name: 'Copy URL', desc: 'Copy shareable link', action: copyURL },
-    { icon: '🖨️', name: 'Print View', desc: 'Open print dialog', action: () => window.print() },
-    { icon: '🌙', name: 'Toggle Dark Mode', desc: 'Switch light/dark theme', action: toggleTheme },
-    { icon: '🔄', name: 'Reset Filters', desc: 'Clear all filters', action: resetFilters },
-    { icon: '👁️', name: 'Toggle Columns', desc: 'Jump to column visibility panel', action: () => document.getElementById('col-vis-panel').scrollIntoView({ behavior: 'smooth' }) },
-    { icon: '⊞', name: 'Toggle Grouping', desc: 'Group or ungroup rows by Sub-System', action: toggleGrouping },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>', name: 'Export CSV', desc: 'Download filtered data as CSV', action: exportCSV },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', name: 'Export JSON', desc: 'Download workbook as JSON', action: exportJSON },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>', name: 'Copy URL', desc: 'Copy shareable link', action: copyURL },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>', name: 'Print View', desc: 'Open print dialog', action: () => window.print() },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>', name: 'Toggle Dark Mode', desc: 'Switch light/dark theme', action: toggleTheme },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>', name: 'Reset Filters', desc: 'Clear all filters', action: resetFilters },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>', name: 'Toggle Columns', desc: 'Jump to column visibility panel', action: () => document.getElementById('col-vis-panel').scrollIntoView({ behavior: 'smooth' }) },
+    { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>', name: 'Toggle Grouping', desc: 'Group or ungroup rows by Sub-System', action: toggleGrouping },
   ];
 
   return { sheetActions, actionItems };
@@ -2198,11 +2485,19 @@ function bindKeyboard() {
 }
 
 // ===== Toast =====
-function toast(msg) {
+function toast(msg, type) {
   const container = document.getElementById('toast-container');
   const div = document.createElement('div');
-  div.className = 'toast';
-  div.innerHTML = `<span>${msg}</span>`;
+  // Detect type from message or explicit param
+  const t = type || (msg.startsWith('✓') || msg.toLowerCase().includes('export') || msg.toLowerCase().includes('copied') || msg.toLowerCase().includes('clear') ? 'success'
+    : msg.toLowerCase().includes('error') || msg.toLowerCase().includes('fail') ? 'error' : 'info');
+  div.className = 'toast ' + t;
+  const icons = {
+    success: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    error: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  };
+  div.innerHTML = `${icons[t] || icons.info}<span>${escHtml(msg)}</span>`;
   container.appendChild(div);
   setTimeout(() => div.remove(), 3000);
 }
