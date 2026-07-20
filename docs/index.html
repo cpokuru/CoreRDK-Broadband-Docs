@@ -769,7 +769,7 @@ mark { background: rgba(245,158,11,0.3); color: inherit; border-radius: 2px; }
                   <div id="charts-row">
                     <div class="chart-card">
                       <div class="chart-title">📊 Sub-System Distribution</div>
-                      <canvas id="donut-canvas" width="500" height="320" style="width:100%;height:auto;max-height:320px"></canvas>
+                      <canvas id="donut-canvas" width="560" height="280" style="width:100%;height:auto;max-height:280px"></canvas>
                       <div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding-bottom:6px">Click segment to filter · hover to inspect</div>
                     </div>
                     <div class="chart-card">
@@ -1354,11 +1354,10 @@ function renderDonutChart() {
   if (!entries.length) return;
 
   // Layout
-  const legendW = 170;
-  const cx = (W - legendW) / 2;
-  const cy = H / 2;
-  const R = Math.min(cx - 10, cy - 20);
-  const r = R * 0.52;
+  const cx = 110;
+  const cy = 140;
+  const R = 100;
+  const r = R * 0.55;
 
   // Build segments
   let angle = -Math.PI / 2;
@@ -1480,31 +1479,55 @@ function renderDonutChart() {
     }
 
     // Legend (right side)
-    const lx0 = W - legendW + 8;
+    const legendX = cx * 2 + 20;
+    const legendStartY = 20;
+    const rowH = 24;
+    const swatchSize = 12;
+    const colGap = 8;
+    const countColX = W - 10;
+    ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'left';
-    const itemH = Math.min(22, (H - 10) / entries.length);
-    entries.forEach(([label, count], i) => {
-      const ly = 8 + i * itemH;
-      if (ly + itemH > H) return;
-      const isHov = anim.hoveredIdx === i;
-      // Color square
-      ctx.fillStyle = PALETTE[i % PALETTE.length];
-      ctx.fillRect(lx0, ly + 2, 10, 10);
-      // Label
-      ctx.fillStyle = isHov ? PALETTE[i % PALETTE.length] : textSec;
-      ctx.font = isHov ? 'bold 9.5px Inter, sans-serif' : '9.5px Inter, sans-serif';
+
+    let maxLabelW = 0;
+    entries.forEach(([label]) => {
       const short = label.length > 16 ? label.slice(0, 15) + '…' : label;
-      ctx.fillText(short, lx0 + 14, ly + 11);
-      // Count
-      ctx.fillStyle = textMuted;
-      ctx.font = '8.5px Inter, sans-serif';
-      ctx.fillText(count, lx0 + 14, ly + itemH - 2);
-      // Mini progress bar
-      const barW = legendW - 28;
-      ctx.fillStyle = themeVar('--border', '#e5e7eb');
-      ctx.fillRect(lx0 + 14, ly + itemH - 1, barW, 2);
+      maxLabelW = Math.max(maxLabelW, ctx.measureText(short).width);
+    });
+
+    entries.forEach(([label, count], i) => {
+      const y = legendStartY + i * rowH;
+      if (y + rowH > H) return;
+      const isHov = anim.hoveredIdx === i;
+      const short = label.length > 16 ? label.slice(0, 15) + '…' : label;
+      const pct = Math.round((count / total) * 100);
+      const labelX = legendX + swatchSize + colGap;
+      const barX = labelX + maxLabelW + 4;
+      const barW = Math.max(0, countColX - labelX - maxLabelW - 12);
+      const fillW = Math.round(barW * count / total);
+
       ctx.fillStyle = PALETTE[i % PALETTE.length];
-      ctx.fillRect(lx0 + 14, ly + itemH - 1, Math.round((count / total) * barW), 2);
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(legendX, y - swatchSize + 2, swatchSize, swatchSize, 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(legendX, y - swatchSize + 2, swatchSize, swatchSize);
+      }
+
+      ctx.fillStyle = isHov ? PALETTE[i % PALETTE.length] : textSec;
+      ctx.font = isHov ? 'bold 11px Inter, sans-serif' : '11px Inter, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(short, labelX, y);
+
+      ctx.fillStyle = themeVar('--border', '#e5e7eb');
+      ctx.fillRect(barX, y + 3, barW, 3);
+      ctx.fillStyle = PALETTE[i % PALETTE.length];
+      ctx.fillRect(barX, y + 3, fillW, 3);
+
+      ctx.fillStyle = textMuted;
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${count} (${pct}%)`, countColX, y);
     });
   }
 
