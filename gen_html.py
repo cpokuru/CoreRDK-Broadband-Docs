@@ -103,7 +103,7 @@ CSS = textwrap.dedent(
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; scroll-behavior: smooth; }
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: var(--bg-base);
       color: var(--text-primary);
       transition: background var(--transition), color var(--transition);
@@ -687,6 +687,397 @@ CSS = textwrap.dedent(
     .compare-field { margin-bottom: 10px; }
     .compare-value { margin-top: 4px; line-height: 1.5; }
 
+
+    /* Advanced UX polish */
+    #nav {
+      position: sticky;
+      isolation: isolate;
+    }
+    #nav::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #3b82f6, #10b981, #8b5cf6, #f59e0b, #3b82f6);
+      background-size: 200% 100%;
+      animation: navBorder 4s linear infinite;
+    }
+    @keyframes navBorder {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 200% 0%; }
+    }
+    #nav .logo-text {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    #nav-breadcrumb {
+      color: rgba(255,255,255,0.68);
+      font-size: 0.8rem;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+
+    #welcome-banner {
+      margin-bottom: 16px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, #1e3a5f, #1a56db);
+      color: #fff;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.25s ease, transform 0.25s ease, margin-bottom 0.25s ease;
+      max-height: 240px;
+      opacity: 1;
+    }
+    #welcome-banner.dismissed {
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+      transform: translateY(-10px);
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .welcome-content {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 20px 22px;
+    }
+    .welcome-icon {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+      font-size: 1.6rem;
+    }
+    .welcome-title {
+      font-size: 1.18rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .welcome-sub {
+      color: rgba(255,255,255,0.82);
+      font-size: 0.92rem;
+      max-width: 70ch;
+    }
+    .welcome-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .welcome-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-size: 0.76rem;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+    }
+    #dismiss-banner {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background var(--transition), transform var(--transition);
+    }
+    #dismiss-banner:hover {
+      background: rgba(255,255,255,0.22);
+      transform: scale(1.04);
+    }
+
+    #stat-cards {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    .stat-card {
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--card-accent, var(--brand-primary));
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      background-image:
+        radial-gradient(circle at top right, rgba(255,255,255,0.7), transparent 38%),
+        repeating-linear-gradient(-45deg, rgba(148,163,184,0.08) 0 2px, transparent 2px 10px);
+    }
+    .stat-card::before { display: none; }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 80px;
+      height: 80px;
+      background: var(--card-accent, var(--brand-primary));
+      opacity: 0.05;
+      border-radius: 50%;
+    }
+    .stat-card:hover {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: var(--shadow-md);
+    }
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(148,163,184,0.18);
+      color: var(--card-accent, var(--brand-primary));
+      margin-bottom: 10px;
+    }
+    [data-theme="dark"] .stat-icon {
+      background: rgba(15,23,42,0.42);
+      border-color: rgba(148,163,184,0.16);
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+    .stat-value {
+      font-family: 'Inter', sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 2.4rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      background: none;
+      -webkit-text-fill-color: currentColor;
+      color: var(--text-primary);
+    }
+    .stat-sub { font-size: 0.76rem; }
+
+    .chart-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    #data-table thead th {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    #data-table tbody td {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    #data-table tbody td:nth-child(2) {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 36px;
+      text-align: center;
+      background: var(--bg-secondary) !important;
+    }
+    #data-table tbody tr:hover td:nth-child(2) {
+      background: var(--bg-secondary) !important;
+    }
+    #data-table tbody tr:nth-child(even) {
+      background: rgba(59, 130, 246, 0.04);
+    }
+    .heatmap-row th {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    #empty-row td svg {
+      margin: 0 auto;
+      color: var(--brand-primary);
+      opacity: 0.88;
+    }
+
+    .sidebar-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .sidebar-section-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      color: inherit;
+    }
+    .sidebar-section-body {
+      margin-top: 10px;
+      max-height: 1000px;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.2s ease;
+    }
+    .sidebar-section.collapsed .sidebar-section-body {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+    }
+    .sidebar-chevron {
+      flex-shrink: 0;
+      color: var(--text-muted);
+      transition: transform var(--transition);
+    }
+    .sidebar-section.collapsed .sidebar-chevron {
+      transform: rotate(-90deg);
+    }
+    .sidebar-sheet-btn {
+      border-left: 2px solid transparent;
+      padding-left: 11px;
+    }
+    .sidebar-filter-pill {
+      padding-right: 6px;
+    }
+    .sidebar-filter-pill button {
+      width: 20px;
+      height: 20px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: rgba(26,86,219,0.12);
+      color: var(--brand-primary);
+      cursor: pointer;
+      display: inline-grid;
+      place-items: center;
+      font-size: 0.82rem;
+      line-height: 1;
+    }
+    .sidebar-filter-pill button:hover {
+      background: rgba(26,86,219,0.18);
+    }
+
+    #page-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+      margin-top: 8px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xs);
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .footer-sep { color: var(--border-medium); }
+    .footer-link {
+      color: var(--brand-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer-link:hover { text-decoration: underline; }
+
+    #kbd-legend {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      z-index: 200;
+      width: 190px;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.64);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-lg);
+      color: var(--text-primary);
+      overflow: hidden;
+      font-size: 0.72rem;
+    }
+    [data-theme="dark"] #kbd-legend {
+      background: rgba(15,23,42,0.72);
+      border-color: rgba(148,163,184,0.18);
+    }
+    .kbd-legend-toggle {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kbd-legend-body {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease, opacity 0.2s ease;
+      padding: 0 12px;
+    }
+    #kbd-legend.open .kbd-legend-body,
+    #kbd-legend:hover .kbd-legend-body,
+    #kbd-legend:focus-within .kbd-legend-body {
+      max-height: 180px;
+      opacity: 1;
+      padding: 0 12px 12px;
+    }
+    .kbd-legend-body div {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    #scroll-top {
+      position: fixed;
+      left: 16px;
+      bottom: 92px;
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--brand-primary);
+      color: #fff;
+      box-shadow: var(--shadow-lg);
+      cursor: pointer;
+      z-index: 201;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      font-size: 1rem;
+    }
+    #scroll-top.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+
     /* Responsive */
     @media (max-width: 768px) {
       #sidebar { position: fixed; bottom: 0; left: 0; right: 0; top: auto; width: 100% !important; height: 50vh; z-index: 200; border-radius: var(--radius-lg) var(--radius-lg) 0 0; transform: translateY(100%); transition: transform var(--transition); }
@@ -696,11 +1087,15 @@ CSS = textwrap.dedent(
       #stat-cards { grid-template-columns: repeat(2, 1fr); }
       .sidebar-actions { grid-template-columns: 1fr; }
       #table-wrapper { max-height: none; }
+      .welcome-content { grid-template-columns: 1fr; }
+      #dismiss-banner { justify-self: start; }
+      #kbd-legend { left: 12px; bottom: 12px; width: calc(100vw - 24px); max-width: 220px; }
+      #scroll-top { left: auto; right: 16px; bottom: 24px; }
     }
 
     /* Print */
     @media print {
-      #nav, #sidebar, #toolbar, #pagination, #charts-row, #stat-cards, .sidebar-toggle { display: none !important; }
+      #nav, #sidebar, #toolbar, #pagination, #charts-row, #stat-cards, .sidebar-toggle, #welcome-banner, #page-footer, #kbd-legend, #scroll-top { display: none !important; }
       #app { display: block; }
       #main { overflow: visible; }
       #table-wrapper { overflow: visible; border: none; max-height: none; }
@@ -747,6 +1142,9 @@ JS = textwrap.dedent(
       bindNav();
       bindKeyboard();
       initProgress();
+      initSidebarSections();
+      initWelcomeBanner();
+      bindFloatingWidgets();
       loadData();
     });
 
@@ -873,6 +1271,8 @@ JS = textwrap.dedent(
       state.groupBy = null;
 
       document.getElementById('search-input').value = state.search;
+      updateNavBreadcrumb(sheet);
+      updateFooterStats();
       renderSheetTabs();
       renderSidebar();
       updateHash();
@@ -887,6 +1287,81 @@ JS = textwrap.dedent(
         const area = document.getElementById('content-area');
         if (area) area.scrollTo({ top: 0, behavior: 'smooth' });
       }
+    }
+
+    function updateNavBreadcrumb(sheet = getActiveSheet()) {
+      const el = document.getElementById('nav-breadcrumb');
+      if (el && sheet) el.textContent = '› ' + sheet.name;
+    }
+
+    function updateFooterStats() {
+      const el = document.getElementById('footer-stats');
+      if (!el || !state.sheets.length) return;
+      const total = state.sheets.reduce((sum, sh) => sum + sh.rows.length, 0);
+      el.textContent = `${total} total components across ${state.sheets.length} profiles`;
+    }
+
+    function initWelcomeBanner() {
+      const banner = document.getElementById('welcome-banner');
+      const dismiss = document.getElementById('dismiss-banner');
+      if (!banner || !dismiss) return;
+      if (localStorage.getItem('bannerDismissed')) {
+        banner.style.display = 'none';
+        return;
+      }
+      dismiss.onclick = () => {
+        localStorage.setItem('bannerDismissed', '1');
+        banner.classList.add('dismissed');
+        setTimeout(() => { banner.style.display = 'none'; }, 320);
+      };
+    }
+
+    function bindFloatingWidgets() {
+      const contentArea = document.getElementById('content-area');
+      const scrollTopBtn = document.getElementById('scroll-top');
+      if (contentArea) contentArea.addEventListener('scroll', updateScrollTopVisibility);
+      if (scrollTopBtn) {
+        scrollTopBtn.onclick = () => {
+          if (contentArea) contentArea.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+      }
+      updateScrollTopVisibility();
+    }
+
+    function updateScrollTopVisibility() {
+      const contentArea = document.getElementById('content-area');
+      const btn = document.getElementById('scroll-top');
+      if (!contentArea || !btn) return;
+      btn.classList.toggle('visible', contentArea.scrollTop > 160);
+    }
+
+    function initSidebarSections() {
+      document.querySelectorAll('#sidebar .sidebar-section').forEach((section) => {
+        if (section.dataset.collapsibleInit === 'true') return;
+        const title = section.querySelector('.sidebar-title');
+        if (!title) return;
+
+        const header = document.createElement('button');
+        header.type = 'button';
+        header.className = 'sidebar-section-header';
+        section.insertBefore(header, title);
+        header.appendChild(title);
+
+        const chevron = document.createElement('span');
+        chevron.className = 'sidebar-chevron';
+        chevron.textContent = '▾';
+        header.appendChild(chevron);
+
+        const body = document.createElement('div');
+        body.className = 'sidebar-section-body';
+        while (header.nextSibling) body.appendChild(header.nextSibling);
+        section.appendChild(body);
+
+        header.addEventListener('click', () => {
+          section.classList.toggle('collapsed');
+        });
+        section.dataset.collapsibleInit = 'true';
+      });
     }
 
     // ===== Sidebar =====
@@ -938,6 +1413,9 @@ JS = textwrap.dedent(
       state.sheets.forEach((sheet, i) => {
         const btn = document.createElement('button');
         btn.className = 'sidebar-sheet-btn' + (i === state.activeSheet ? ' active' : '');
+        btn.dataset.sheetIndex = i;
+        btn.style.borderLeftColor = PALETTE[i % PALETTE.length];
+        btn.style.borderLeftWidth = i === state.activeSheet ? '3px' : '2px';
         btn.innerHTML = `<span class="sidebar-sheet-name">${escHtml(sheet.name)}</span><span class="sidebar-sheet-count">${sheet.rows.length}</span>`;
         btn.onclick = () => switchSheet(i);
         container.appendChild(btn);
@@ -1006,13 +1484,59 @@ JS = textwrap.dedent(
       container.innerHTML = '';
 
       const pills = [];
-      if (state.search) pills.push('Search: ' + state.search);
-      if (state.groupBy !== null) pills.push('Grouped');
-      if (state.sortCols.length) pills.push('Sort: ' + state.sortCols.map(s => `${getActiveSheet().headers[s.col]} ${s.dir}`).join(', '));
+      if (state.search) {
+        pills.push({
+          label: 'Search: ' + state.search,
+          clear: () => {
+            state.search = '';
+            document.getElementById('search-input').value = '';
+            document.getElementById('global-search-panel').classList.remove('visible');
+            applyFilters();
+          },
+        });
+      }
+      if (state.groupBy !== null) {
+        pills.push({
+          label: 'Grouped',
+          clear: () => {
+            state.groupBy = null;
+            state.groupCollapsed.clear();
+            updateGroupButton();
+            applyFilters();
+          },
+        });
+      }
+      if (state.sortCols.length) {
+        pills.push({
+          label: 'Sort: ' + state.sortCols.map(s => `${getActiveSheet().headers[s.col]} ${s.dir}`).join(', '),
+          clear: () => {
+            state.sortCols = [];
+            applyFilters();
+          },
+        });
+      }
       Object.entries(state.colFilters).forEach(([col, val]) => {
-        if (val && val !== '__all__') pills.push(`${getActiveSheet().headers[col]}: ${val}`);
+        if (!val || val === '__all__') return;
+        pills.push({
+          label: `${getActiveSheet().headers[col]}: ${val}`,
+          clear: () => {
+            delete state.colFilters[col];
+            const sel = document.querySelector(`.col-filter-select[data-col="${col}"]`);
+            if (sel) sel.value = '__all__';
+            applyFilters();
+          },
+        });
       });
-      if (state.hiddenCols.size) pills.push(`${state.hiddenCols.size} columns hidden`);
+      if (state.hiddenCols.size) {
+        pills.push({
+          label: `${state.hiddenCols.size} columns hidden`,
+          clear: () => {
+            state.hiddenCols = new Set();
+            renderColVisibility();
+            applyFilters();
+          },
+        });
+      }
 
       if (!pills.length) {
         container.innerHTML = '<div class="sidebar-empty">No active filters. Use search, column filters, grouping, or quick actions to narrow the table.</div>';
@@ -1021,10 +1545,20 @@ JS = textwrap.dedent(
 
       const row = document.createElement('div');
       row.className = 'sidebar-pill-row';
-      pills.forEach(label => {
+      pills.forEach(({ label, clear }) => {
         const pill = document.createElement('span');
         pill.className = 'sidebar-filter-pill';
-        pill.textContent = label;
+        pill.appendChild(document.createTextNode(label));
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.setAttribute('aria-label', 'Clear ' + label);
+        close.textContent = '×';
+        close.onclick = (e) => {
+          e.stopPropagation();
+          clear();
+        };
+        pill.appendChild(close);
         row.appendChild(pill);
       });
       container.appendChild(row);
@@ -1049,9 +1583,30 @@ JS = textwrap.dedent(
       const rows = sheet.rows;
       const accentColors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'];
       const cards = [
-        { label: 'Total Rows', value: rows.length, sub: 'data rows', accent: accentColors[0] },
-        { label: 'Columns', value: sheet.headers.length, sub: 'fields', accent: accentColors[1] },
-        { label: 'Sheet', value: state.activeSheet + 1, sub: 'of ' + state.sheets.length, accent: accentColors[2] },
+        {
+          label: 'Total Rows',
+          value: rows.length,
+          sub: 'data rows',
+          accent: accentColors[0],
+          title: 'Total number of component rows in the active profile.',
+          icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+        },
+        {
+          label: 'Columns',
+          value: sheet.headers.length,
+          sub: 'fields',
+          accent: accentColors[1],
+          title: 'Number of available columns in the active sheet.',
+          icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/></svg>',
+        },
+        {
+          label: 'Sheet',
+          value: state.activeSheet + 1,
+          sub: 'of ' + state.sheets.length,
+          accent: accentColors[2],
+          title: 'Position of the active profile within the workbook.',
+          icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg>',
+        },
       ];
 
       let filled = 0;
@@ -1060,16 +1615,23 @@ JS = textwrap.dedent(
         total += 1;
         if (c && c.toString().trim()) filled += 1;
       }));
-      cards.push({ label: 'Fill Rate', value: Math.round((filled / Math.max(total, 1)) * 100) + '%', sub: filled + '/' + total + ' cells', accent: accentColors[3] });
+      cards.push({
+        label: 'Fill Rate',
+        value: Math.round((filled / Math.max(total, 1)) * 100) + '%',
+        sub: filled + '/' + total + ' cells',
+        accent: accentColors[3],
+        title: 'Percentage of non-empty cells across the active sheet.',
+        icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+      });
 
       const container = document.getElementById('stat-cards');
       container.innerHTML = '';
       cards.forEach(c => {
         const div = document.createElement('div');
         div.className = 'stat-card';
-        div.style.borderLeftColor = c.accent;
+        div.title = c.title;
         div.style.cssText += `--card-accent: ${c.accent};`;
-        div.innerHTML = `<div class="stat-label">${c.label}</div><div class="stat-value" style="background:linear-gradient(135deg,${c.accent},${c.accent}99);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" data-target="${c.value}">${c.value}</div><div class="stat-sub">${c.sub}</div>`;
+        div.innerHTML = `<span class="stat-icon">${c.icon}</span><div class="stat-label">${c.label}</div><div class="stat-value" style="color:${c.accent}" data-target="${c.value}">${c.value}</div><div class="stat-sub">${c.sub}</div>`;
         container.appendChild(div);
       });
       animateCounters();
@@ -1662,8 +2224,10 @@ JS = textwrap.dedent(
         const th = document.createElement('th');
         const col = sheet.rows.map(r => r[i] || '');
         const pct = Math.round(col.filter(v => v.toString().trim()).length / Math.max(col.length, 1) * 100);
-        const hue = Math.round(pct * 1.2);
-        th.style.cssText = `background: hsl(${hue}, 60%, 90%) !important; color: #333 !important;`;
+        const color = pct >= 80 ? `rgba(16,185,129,${0.15 + pct / 200})`
+          : pct >= 50 ? `rgba(245,158,11,${0.1 + pct / 400})`
+          : `rgba(239,68,68,0.12)`;
+        th.style.cssText = `background: ${color} !important; color: var(--text-secondary) !important;`;
         th.textContent = pct + '%';
         th.title = h.replace('\n', ' ') + ': ' + pct + '% filled';
         hmRow.appendChild(th);
@@ -1811,11 +2375,11 @@ JS = textwrap.dedent(
 
       if (!pageData.length) {
         const tr = document.createElement('tr');
+        tr.id = 'empty-row';
         const td = document.createElement('td');
         td.colSpan = visHeaders.length + 1;
-        td.style.padding = '24px 12px';
-        td.style.color = themeVar('--text-muted', '#64748b');
-        td.textContent = 'No results match the current filters.';
+        td.style.cssText = 'padding:48px 24px;text-align:center';
+        td.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" stroke-width="1.5"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17.5" cy="17.5" r="3.5" fill="rgba(59,130,246,0.12)" stroke="currentColor" stroke-width="1.5"/><path d="m16.3 16.3 2.4 2.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><div style="font-size:1.1rem;font-weight:600;color:var(--text-primary);margin:12px 0 4px">No matching components</div><div style="font-size:0.875rem;color:var(--text-muted)">Try adjusting your search or clearing active filters</div><button onclick="resetFilters()" style="margin-top:12px;padding:8px 20px;background:var(--brand-primary);color:#fff;border:none;border-radius:var(--radius-full);cursor:pointer;font-size:0.85rem">Clear Filters</button>`;
         tr.appendChild(td);
         tbody.appendChild(tr);
       }
@@ -2227,8 +2791,13 @@ JS = textwrap.dedent(
       state.search = '';
       state.sortCols = [];
       state.page = 1;
+      state.groupBy = null;
+      state.groupCollapsed.clear();
+      state.hiddenCols = new Set();
       document.getElementById('search-input').value = '';
       document.getElementById('global-search-panel').classList.remove('visible');
+      renderColVisibility();
+      updateGroupButton();
       applyFilters();
       toast('Filters cleared');
     }
@@ -2314,6 +2883,7 @@ JS = textwrap.dedent(
 
       window.addEventListener('resize', () => {
         updateSidebarToggle();
+        updateScrollTopVisibility();
         renderCharts();
       });
     }
@@ -2435,7 +3005,7 @@ def build_html(workbook_tag: str) -> str:
           <title>RDK-B Component List 2026</title>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
           <style>
         {CSS}
           </style>
@@ -2449,6 +3019,7 @@ def build_html(workbook_tag: str) -> str:
             <a class="logo" href="#" aria-label="RDK-B Component List Home">
               <div class="logo-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg></div>
               <span class="logo-text">RDK-B Component List 2026</span>
+              <span id="nav-breadcrumb"></span>
             </a>
             <div class="spacer"></div>
             <button class="nav-btn" id="cmd-btn" aria-label="Command palette (Ctrl+K)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> <span>Ctrl+K</span></button>
@@ -2505,6 +3076,24 @@ def build_html(workbook_tag: str) -> str:
                 </div>
 
                 <div id="main-content" style="display:none">
+                  <div id="welcome-banner">
+                    <div class="welcome-content">
+                      <div class="welcome-icon">📡</div>
+                      <div>
+                        <div class="welcome-title">RDK-B Component List 2026</div>
+                        <div class="welcome-sub">Interactive explorer for RDK-B component profiles across Router, Gateway and all deployment configurations.</div>
+                        <div class="welcome-chips">
+                          <span class="welcome-chip">🔍 Fuzzy Search</span>
+                          <span class="welcome-chip">📊 Live Charts</span>
+                          <span class="welcome-chip">⬇ CSV / JSON Export</span>
+                          <span class="welcome-chip">⌨ Ctrl+K Command Palette</span>
+                          <span class="welcome-chip">🌙 Dark Mode</span>
+                        </div>
+                      </div>
+                      <button id="dismiss-banner" aria-label="Dismiss banner">✕</button>
+                    </div>
+                  </div>
+
                   <div id="stat-cards" aria-label="Summary statistics"></div>
 
                   <div id="charts-row">
@@ -2542,10 +3131,32 @@ def build_html(workbook_tag: str) -> str:
                   </div>
 
                   <nav id="pagination" aria-label="Table pagination"></nav>
+
+                  <footer id="page-footer">
+                    <div class="footer-inner">
+                      <span>RDK-B Component List 2026</span>
+                      <span class="footer-sep">·</span>
+                      <a href="https://github.com/cpokuru/CoreRDK-Broadband-Docs" target="_blank" rel="noopener" class="footer-link">View on GitHub ↗</a>
+                      <span class="footer-sep">·</span>
+                      <span id="footer-stats"></span>
+                    </div>
+                  </footer>
                 </div>
               </div>
             </main>
           </div>
+
+          <div id="kbd-legend" tabindex="0">
+            <button type="button" class="kbd-legend-toggle" onclick="this.parentElement.classList.toggle('open')">⌨ Shortcuts <span>▾</span></button>
+            <div class="kbd-legend-body">
+              <div><span><kbd class="kbd">Ctrl+K</kbd></span><span>Command palette</span></div>
+              <div><span><kbd class="kbd">Shift+Click</kbd></span><span>Multi-sort</span></div>
+              <div><span><kbd class="kbd">Esc</kbd></span><span>Close panels</span></div>
+              <div><span><kbd class="kbd">↑↓</kbd></span><span>Navigate rows</span></div>
+            </div>
+          </div>
+
+          <button id="scroll-top" aria-label="Scroll to top">↑</button>
 
           <div id="compare-fab" role="button" tabindex="0" aria-label="Compare selected rows">
             Compare <span class="compare-count">2</span> rows
