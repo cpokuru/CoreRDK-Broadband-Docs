@@ -2008,12 +2008,38 @@ function updateSidebarToggle() {
   }
 }
 
+function trapFocus(modal, e) {
+  const focusable = modal.querySelectorAll(
+    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  );
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (!first) return;
+  if (e.shiftKey) {
+    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+  } else {
+    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+}
+
 function bindKeyboard() {
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       if (document.getElementById('cmd-overlay').classList.contains('open')) closeCmdPalette();
       else openCmdPalette();
+      return;
+    }
+
+    // Focus trap for command palette
+    if (e.key === 'Tab' && document.getElementById('cmd-overlay').classList.contains('open')) {
+      trapFocus(document.getElementById('cmd-modal'), e);
+      return;
+    }
+
+    // Focus trap for compare panel
+    if (e.key === 'Tab' && document.getElementById('compare-panel').classList.contains('open')) {
+      trapFocus(document.getElementById('compare-panel'), e);
       return;
     }
 
