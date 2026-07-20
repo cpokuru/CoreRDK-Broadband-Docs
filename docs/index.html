@@ -643,7 +643,7 @@ mark { background: rgba(245,158,11,0.3); color: inherit; border-radius: 2px; }
                       <input id="search-input" type="search" placeholder="Search all columns… (fuzzy)" aria-label="Search table data">
                     </div>
                     <button class="toolbar-btn" id="reset-filters-btn">✕ Reset</button>
-                    <button class="toolbar-btn primary" id="group-toggle-btn" aria-pressed="true">⊞ Group</button>
+                    <button class="toolbar-btn" id="group-toggle-btn" aria-pressed="false">⊞ Group</button>
                   </div>
 
                   <div id="search-history" role="list" aria-label="Search history"></div>
@@ -833,8 +833,7 @@ function switchSheet(idx, animate = true) {
   state.hiddenCols = new Set();
 
   const sheet = getActiveSheet();
-  const subsystemIdx = findSubsystemIndex(sheet);
-  state.groupBy = subsystemIdx >= 0 ? subsystemIdx : null;
+  state.groupBy = null;
 
   document.getElementById('search-input').value = state.search;
   renderSheetTabs();
@@ -2008,38 +2007,12 @@ function updateSidebarToggle() {
   }
 }
 
-function trapFocus(modal, e) {
-  const focusable = modal.querySelectorAll(
-    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
-  );
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (!first) return;
-  if (e.shiftKey) {
-    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-  } else {
-    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-  }
-}
-
 function bindKeyboard() {
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       if (document.getElementById('cmd-overlay').classList.contains('open')) closeCmdPalette();
       else openCmdPalette();
-      return;
-    }
-
-    // Focus trap for command palette
-    if (e.key === 'Tab' && document.getElementById('cmd-overlay').classList.contains('open')) {
-      trapFocus(document.getElementById('cmd-modal'), e);
-      return;
-    }
-
-    // Focus trap for compare panel
-    if (e.key === 'Tab' && document.getElementById('compare-panel').classList.contains('open')) {
-      trapFocus(document.getElementById('compare-panel'), e);
       return;
     }
 

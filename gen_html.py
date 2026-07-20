@@ -3,7 +3,7 @@ import re
 import textwrap
 
 
-ROOT = Path("/home/runner/work/CoreRDK-Broadband-Docs/CoreRDK-Broadband-Docs")
+ROOT = Path(__file__).parent
 HTML_PATH = ROOT / "docs" / "index.html"
 
 
@@ -716,8 +716,7 @@ JS = textwrap.dedent(
       state.hiddenCols = new Set();
 
       const sheet = getActiveSheet();
-      const subsystemIdx = findSubsystemIndex(sheet);
-      state.groupBy = subsystemIdx >= 0 ? subsystemIdx : null;
+      state.groupBy = null;
 
       document.getElementById('search-input').value = state.search;
       renderSheetTabs();
@@ -2069,7 +2068,7 @@ def build_html(workbook_tag: str) -> str:
                       <input id="search-input" type="search" placeholder="Search all columns… (fuzzy)" aria-label="Search table data">
                     </div>
                     <button class="toolbar-btn" id="reset-filters-btn">✕ Reset</button>
-                    <button class="toolbar-btn primary" id="group-toggle-btn" aria-pressed="true">⊞ Group</button>
+                    <button class="toolbar-btn" id="group-toggle-btn" aria-pressed="false">⊞ Group</button>
                   </div>
 
                   <div id="search-history" role="list" aria-label="Search history"></div>
