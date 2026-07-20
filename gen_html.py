@@ -1,0 +1,2135 @@
+from pathlib import Path
+import re
+import textwrap
+
+
+ROOT = Path("/home/runner/work/CoreRDK-Broadband-Docs/CoreRDK-Broadband-Docs")
+HTML_PATH = ROOT / "docs" / "index.html"
+
+
+def extract_workbook_tag(content: str) -> str:
+    match = re.search(
+        r'(<script id="workbook-data" type="application/json">.*?</script>)',
+        content,
+        re.DOTALL,
+    )
+    if not match:
+        raise RuntimeError("Could not find workbook-data script tag in docs/index.html")
+    return match.group(1)
+
+
+CSS = textwrap.dedent(
+    r'''
+    :root {
+      --brand-navy: #0b1f3a;
+      --brand-teal: #0f8b8d;
+      --accent-amber: #f59e0b;
+      --success: #10b981;
+      --danger: #ef4444;
+      
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-hover: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --nav-h: 60px;
+      --sidebar-w: 260px;
+      --transition: 0.2s ease;
+    }
+    [data-theme="dark"] {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --bg-hover: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #334155;
+    }
+
+    /* Reset & base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: background var(--transition), color var(--transition);
+      min-height: 100vh;
+    }
+
+    /* Progress bar */
+    #progress-bar {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--brand-teal), var(--accent-amber));
+      z-index: 9999;
+      transition: width 0.2s ease;
+    }
+
+    /* Nav */
+    #nav {
+      position: sticky; top: 0; z-index: 100;
+      height: var(--nav-h);
+      background: var(--brand-navy);
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 20px;
+      box-shadow: var(--shadow-md);
+    }
+    #nav .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    #nav .logo-icon {
+      width: 36px; height: 36px; background: var(--brand-teal);
+      border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 18px;
+    }
+    #nav .logo-text { color: #fff; font-weight: 700; font-size: 1.1rem; }
+    #nav .spacer { flex: 1; }
+    .nav-btn {
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; border-radius: var(--radius-sm); cursor: pointer;
+      font-size: 0.8rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;
+      transition: background var(--transition);
+      white-space: nowrap;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.22); }
+    #dark-toggle { font-size: 1.1rem; padding: 6px 10px; }
+
+    /* Toast */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9000;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      background: var(--brand-navy); color: #fff;
+      padding: 10px 18px; border-radius: var(--radius-md);
+      font-size: 0.875rem; box-shadow: var(--shadow-lg);
+      animation: slideInRight 0.25s ease, fadeOut 0.3s ease 2.5s forwards;
+      display: flex; align-items: center; gap: 8px;
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(10px); } }
+
+    /* Layout */
+    #app {
+      display: flex; height: calc(100vh - var(--nav-h));
+      position: relative;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      transition: width var(--transition), transform var(--transition);
+      display: flex; flex-direction: column;
+    }
+    #sidebar.collapsed { width: 0; overflow: hidden; }
+    .sidebar-section { padding: 16px; }
+    .sidebar-title {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px;
+    }
+    .sidebar-toggle {
+      position: absolute; left: var(--sidebar-w); top: 12px; z-index: 10;
+      width: 24px; height: 24px; background: var(--bg-card);
+      border: 1px solid var(--border); border-left: none;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      cursor: pointer; display: grid; place-items: center;
+      font-size: 0.75rem; color: var(--text-secondary);
+      transition: left var(--transition);
+    }
+    #sidebar.collapsed ~ .sidebar-toggle { left: 0; }
+
+    /* Main content */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Sheet tabs */
+    #sheet-tabs {
+      display: flex; gap: 6px; padding: 12px 20px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      overflow-x: auto;
+    }
+    .tab-pill {
+      padding: 8px 18px; border-radius: var(--radius-md) var(--radius-md) 0 0;
+      cursor: pointer; font-size: 0.875rem; font-weight: 500;
+      border: 1px solid transparent; border-bottom: none;
+      color: var(--text-secondary); background: transparent;
+      transition: all var(--transition); white-space: nowrap;
+    }
+    .tab-pill.active {
+      background: var(--bg-secondary); color: var(--brand-teal);
+      border-color: var(--border); font-weight: 700;
+    }
+    .tab-pill:hover:not(.active) { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* Content area */
+    #content-area { flex: 1; overflow-y: auto; padding: 16px 20px; }
+
+    /* Stat cards */
+    #stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--brand-teal); line-height: 1.2; }
+    .stat-sub { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Charts */
+    #charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .chart-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-sm);
+    }
+    .chart-title { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    canvas { display: block; }
+
+    /* Toolbar */
+    #toolbar {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    #search-wrapper { position: relative; flex: 1; min-width: 200px; }
+    #search-input {
+      width: 100%; padding: 8px 12px 8px 36px;
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      background: var(--bg-card); color: var(--text-primary);
+      font-size: 0.875rem; font-family: inherit;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    #search-input:focus { outline: none; border-color: var(--brand-teal); box-shadow: 0 0 0 3px rgba(15,139,141,0.15); }
+    .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+    #search-history { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .history-chip {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px; font-size: 0.75rem;
+      cursor: pointer; color: var(--text-secondary);
+      transition: all var(--transition);
+    }
+    .history-chip:hover { background: var(--brand-teal); color: #fff; border-color: var(--brand-teal); }
+    #sr-announce { position: absolute; width: 1px; height: 1px; clip: rect(0,0,0,0); overflow: hidden; }
+
+    /* Toolbar buttons */
+    .toolbar-btn {
+      padding: 7px 14px; border-radius: var(--radius-md); cursor: pointer;
+      font-size: 0.8rem; font-weight: 500; display: flex; align-items: center; gap: 6px;
+      border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);
+      transition: all var(--transition); white-space: nowrap;
+    }
+    .toolbar-btn:hover { background: var(--bg-hover); }
+    .toolbar-btn.primary { background: var(--brand-teal); color: #fff; border-color: var(--brand-teal); }
+    .toolbar-btn.primary:hover { filter: brightness(1.1); }
+
+    /* Filter row / column visibility */
+    .col-vis-panel {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px; margin-bottom: 10px;
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .col-toggle-chip {
+      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem;
+      cursor: pointer; border: 1px solid var(--border);
+      background: var(--bg-secondary); color: var(--text-secondary);
+      user-select: none; transition: all var(--transition);
+    }
+    .col-toggle-chip.active { background: var(--brand-teal); color: #fff; border-color: var(--brand-teal); }
+
+    /* Pagination */
+    #pagination {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 0; justify-content: flex-end; flex-wrap: wrap;
+    }
+    .page-btn {
+      padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+      background: var(--bg-card); cursor: pointer; color: var(--text-primary);
+      font-size: 0.8rem; transition: all var(--transition);
+    }
+    .page-btn:hover { background: var(--bg-hover); }
+    .page-btn.active { background: var(--brand-teal); color: #fff; border-color: var(--brand-teal); }
+    .page-btn:disabled { opacity: 0.4; cursor: default; }
+    #rows-per-page { padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-primary); font-size: 0.8rem; }
+
+    /* Table wrapper */
+    #table-wrapper {
+      overflow-x: auto; overflow-y: auto;
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      background: var(--bg-card); box-shadow: var(--shadow-sm);
+      max-height: calc(100vh - 400px);
+      position: relative;
+    }
+    #data-table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+    #data-table thead th {
+      position: sticky; top: 0; z-index: 5;
+      background: var(--brand-navy); color: #fff;
+      padding: 10px 12px; text-align: left; white-space: nowrap;
+      user-select: none; cursor: pointer; font-weight: 600;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    #data-table thead th:first-child { position: sticky; left: 0; z-index: 6; }
+    #data-table thead th:hover { background: #162d50; }
+    .sort-badge { 
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--brand-teal); color: #fff; font-size: 0.65rem;
+      font-weight: 700; margin-left: 4px;
+    }
+    .sort-arrow { margin-left: 4px; opacity: 0.6; }
+
+    /* Heatmap header row */
+    .heatmap-row th {
+      background: var(--bg-secondary) !important; color: var(--text-secondary) !important;
+      font-size: 0.7rem; padding: 4px 12px !important; cursor: default !important;
+      border-right: 1px solid var(--border) !important;
+    }
+
+    /* Column resize handle */
+    .col-resize {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 4px;
+      cursor: col-resize; background: transparent;
+    }
+    .col-resize:hover, .col-resize.active { background: var(--brand-teal); }
+
+    /* Table body */
+    #data-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: box-shadow var(--transition), background var(--transition);
+    }
+    #data-table tbody tr:hover { background: var(--bg-hover); box-shadow: var(--shadow-sm); }
+    #data-table tbody td {
+      padding: 8px 12px; vertical-align: top; max-width: 240px;
+      border-right: 1px solid var(--border);
+    }
+    #data-table tbody td:first-child { position: sticky; left: 0; background: var(--bg-card); z-index: 1; }
+    #data-table tbody tr:hover td:first-child { background: var(--bg-hover); }
+
+    /* Cell truncate */
+    .cell-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+    .cell-expand-btn { color: var(--brand-teal); cursor: pointer; font-size: 0.75rem; display: none; }
+    td:hover .cell-expand-btn { display: inline; }
+
+    /* Cell popover */
+    #cell-popover {
+      position: fixed; z-index: 500; max-width: 360px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px; box-shadow: var(--shadow-lg);
+      font-size: 0.875rem; word-break: break-word;
+      display: none;
+    }
+    #cell-popover.visible { display: block; }
+    #cell-popover-close { float: right; cursor: pointer; color: var(--text-muted); margin-left: 8px; }
+
+    /* Group rows */
+    .group-row {
+      background: var(--bg-secondary) !important;
+      font-weight: 700; cursor: pointer;
+    }
+    .group-row td { color: var(--brand-navy); padding: 8px 12px !important; }
+    [data-theme="dark"] .group-row td { color: var(--brand-teal); }
+    .group-row td:first-child { display: flex; align-items: center; gap: 8px; }
+    .group-badge { background: var(--brand-teal); color: #fff; border-radius: 20px; padding: 1px 8px; font-size: 0.7rem; }
+    .group-chevron { transition: transform var(--transition); display: inline-block; }
+    .group-row.collapsed .group-chevron { transform: rotate(-90deg); }
+
+    /* Compare mode */
+    .row-compare-cb { width: 14px; height: 14px; cursor: pointer; accent-color: var(--brand-teal); }
+    #compare-fab {
+      position: fixed; bottom: 80px; right: 24px; z-index: 400;
+      background: var(--brand-teal); color: #fff;
+      padding: 12px 20px; border-radius: 30px; cursor: pointer;
+      font-weight: 700; box-shadow: var(--shadow-lg); display: none;
+      align-items: center; gap: 8px; font-size: 0.9rem;
+      animation: popIn 0.25s ease;
+    }
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* Compare panel */
+    #compare-panel {
+      position: fixed; top: var(--nav-h); right: 0; bottom: 0; width: 480px; max-width: 95vw;
+      background: var(--bg-card); border-left: 1px solid var(--border);
+      z-index: 300; transform: translateX(100%);
+      transition: transform var(--transition); overflow-y: auto;
+      box-shadow: var(--shadow-lg); padding: 20px;
+    }
+    #compare-panel.open { transform: translateX(0); }
+    #compare-panel h3 { margin-bottom: 16px; color: var(--text-primary); }
+    .compare-col { font-size: 0.78rem; }
+    .compare-col strong { color: var(--brand-teal); }
+    .compare-diff { background: rgba(245,158,11,0.15); border-radius: 4px; padding: 1px 4px; }
+
+    /* Command palette */
+    #cmd-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 800; display: none; align-items: flex-start; justify-content: center;
+      padding-top: 80px;
+    }
+    #cmd-overlay.open { display: flex; }
+    #cmd-modal {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); width: 580px; max-width: 95vw;
+      box-shadow: var(--shadow-lg); overflow: hidden;
+    }
+    #cmd-input {
+      width: 100%; padding: 18px 20px; font-size: 1.1rem;
+      border: none; background: transparent; color: var(--text-primary); font-family: inherit;
+      border-bottom: 1px solid var(--border);
+    }
+    #cmd-input:focus { outline: none; }
+    #cmd-results { max-height: 400px; overflow-y: auto; padding: 8px 0; }
+    .cmd-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px; cursor: pointer; font-size: 0.9rem;
+      transition: background var(--transition);
+    }
+    .cmd-item:hover, .cmd-item.selected { background: var(--bg-hover); }
+    .cmd-item .cmd-icon { width: 32px; height: 32px; background: var(--bg-secondary); border-radius: var(--radius-sm); display: grid; place-items: center; flex-shrink: 0; font-size: 1rem; }
+    .cmd-item .cmd-name { font-weight: 600; }
+    .cmd-item .cmd-desc { font-size: 0.78rem; color: var(--text-muted); }
+    .cmd-group-label { padding: 8px 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+
+    /* Filter dropdowns in column headers */
+    .col-filter-select {
+      display: block; width: calc(100% - 4px); margin-top: 4px;
+      font-size: 0.7rem; padding: 2px 4px; border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1);
+      color: #fff; cursor: pointer;
+    }
+    .col-filter-select option { color: var(--text-primary); background: var(--bg-card); }
+
+    /* Global search results panel */
+    #global-search-panel {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px; margin-bottom: 12px;
+      display: none;
+    }
+    #global-search-panel.visible { display: block; }
+    .global-sheet-group { margin-bottom: 10px; }
+    .global-sheet-label { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .global-badge { background: var(--brand-teal); color: #fff; border-radius: 20px; padding: 1px 8px; font-size: 0.7rem; }
+    .global-result-row { font-size: 0.78rem; color: var(--text-secondary); padding: 3px 0; cursor: pointer; }
+    .global-result-row:hover { color: var(--brand-teal); }
+    mark { background: rgba(245,158,11,0.3); color: inherit; border-radius: 2px; }
+
+    /* Skeleton */
+    .skeleton {
+      animation: shimmer 1.5s infinite;
+      background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+      background-size: 200% 100%;
+      border-radius: var(--radius-sm); height: 14px; margin: 4px 0;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* Link cells */
+    .cell-link { color: var(--brand-teal); text-decoration: none; font-size: 0.75rem; }
+    .cell-link:hover { text-decoration: underline; }
+
+    /* Status badge */
+    .status-badge { 
+      display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+    }
+    .status-required { background: rgba(16,185,129,0.15); color: #10b981; }
+    .status-optional { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .status-deprecated { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    /* Extra sidebar polish */
+    .sidebar-meta-grid { display: grid; gap: 10px; }
+    .sidebar-meta-card {
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .sidebar-meta-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .sidebar-meta-value { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+    .sidebar-meta-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+    .sidebar-list { display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-sheet-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      cursor: pointer;
+      font: inherit;
+      transition: all var(--transition);
+      text-align: left;
+    }
+    .sidebar-sheet-btn:hover { background: var(--bg-hover); }
+    .sidebar-sheet-btn.active {
+      border-color: var(--brand-teal);
+      background: rgba(15,139,141,0.08);
+      color: var(--brand-teal);
+    }
+    .sidebar-sheet-name { font-size: 0.82rem; font-weight: 600; }
+    .sidebar-sheet-count {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sidebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sidebar-action-btn {
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.78rem;
+      transition: all var(--transition);
+    }
+    .sidebar-action-btn:hover { background: var(--bg-hover); }
+    .sidebar-pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .sidebar-filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 0.74rem;
+    }
+    .sidebar-legend { display: grid; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-secondary); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+    .sidebar-empty { font-size: 0.76rem; color: var(--text-muted); line-height: 1.45; }
+    .kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+    .section-note {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .compare-grid { display: grid; gap: 12px; }
+    .compare-field { margin-bottom: 10px; }
+    .compare-value { margin-top: 4px; line-height: 1.5; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #sidebar { position: fixed; bottom: 0; left: 0; right: 0; top: auto; width: 100% !important; height: 50vh; z-index: 200; border-radius: var(--radius-lg) var(--radius-lg) 0 0; transform: translateY(100%); transition: transform var(--transition); }
+      #sidebar.mobile-open { transform: translateY(0); }
+      #charts-row { grid-template-columns: 1fr; }
+      .nav-btn span { display: none; }
+      #stat-cards { grid-template-columns: repeat(2, 1fr); }
+      .sidebar-actions { grid-template-columns: 1fr; }
+      #table-wrapper { max-height: none; }
+    }
+
+    /* Print */
+    @media print {
+      #nav, #sidebar, #toolbar, #pagination, #charts-row, #stat-cards, .sidebar-toggle { display: none !important; }
+      #app { display: block; }
+      #main { overflow: visible; }
+      #table-wrapper { overflow: visible; border: none; max-height: none; }
+      #data-table tbody td:first-child { position: static; }
+      #data-table thead th:first-child { position: static; }
+    }
+    '''
+).strip()
+
+
+JS = textwrap.dedent(
+    r'''
+    // ===== State =====
+    const state = {
+      sheets: [],
+      activeSheet: 0,
+      sortCols: [],
+      filters: {},
+      colWidths: {},
+      hiddenCols: new Set(),
+      search: '',
+      page: 1,
+      pageSize: 25,
+      groupBy: null,
+      groupCollapsed: new Set(),
+      compareRows: new Set(),
+      searchHistory: [],
+      filteredData: [],
+      colFilters: {},
+      globalSearch: false,
+    };
+
+    const PALETTE = ['#0f8b8d','#f59e0b','#10b981','#6366f1','#f43f5e','#8b5cf6','#06b6d4','#84cc16'];
+    let cmdItems = [];
+    let cmdSelected = 0;
+
+    // ===== Boot =====
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      bindNav();
+      bindKeyboard();
+      initProgress();
+      loadData();
+    });
+
+    function initProgress() {
+      const bar = document.getElementById('progress-bar');
+      if (!bar) return;
+      bar.style.width = '60%';
+      setTimeout(() => {
+        bar.style.width = '100%';
+        setTimeout(() => { bar.style.opacity = '0'; }, 250);
+      }, 200);
+    }
+
+    function initTheme() {
+      const stored = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = stored || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('dark-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('dark-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+      renderCharts();
+      toast('Switched to ' + next + ' mode');
+    }
+
+    // ===== Data Loading =====
+    function loadData() {
+      const workbookElId = 'workbook' + '-data';
+      const el = document.getElementById(workbookElId);
+      if (!el) throw new Error('Missing workbook JSON script tag');
+      const wb = JSON.parse(el.textContent);
+      if (!wb || !Array.isArray(wb.sheets)) throw new Error('Invalid workbook structure');
+      state.sheets = wb.sheets;
+
+      const hash = parseHash();
+      const maxIndex = Math.max(0, state.sheets.length - 1);
+      state.activeSheet = Number.isFinite(hash.sheet) ? Math.min(Math.max(hash.sheet, 0), maxIndex) : 0;
+      state.search = hash.q || '';
+      document.getElementById('search-input').value = state.search;
+
+      try {
+        state.searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+      } catch (e) {
+        state.searchHistory = [];
+      }
+
+      renderSheetTabs();
+      renderSearchHistory();
+      switchSheet(state.activeSheet, false);
+
+      document.getElementById('skeleton-loader').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+    }
+
+    // ===== Hash / URL Sync =====
+    function parseHash() {
+      const h = location.hash.replace('#', '');
+      const p = new URLSearchParams(h);
+      const sheetParam = parseInt(p.get('sheet') || '0', 10);
+      return { sheet: sheetParam, q: p.get('q') || '' };
+    }
+
+    function updateHash() {
+      const p = new URLSearchParams();
+      p.set('sheet', String(state.activeSheet));
+      if (state.search) p.set('q', state.search);
+      history.replaceState(null, '', '#' + p.toString());
+    }
+
+    function getActiveSheet() {
+      return state.sheets[state.activeSheet];
+    }
+
+    function findSubsystemIndex(sheet = getActiveSheet()) {
+      return sheet ? sheet.headers.findIndex(h => /sub-?system/i.test(h)) : -1;
+    }
+
+    function findStatusIndex(sheet = getActiveSheet()) {
+      return sheet ? sheet.headers.findIndex(h => /status/i.test(h)) : -1;
+    }
+
+    // ===== Tabs =====
+    function renderSheetTabs() {
+      const container = document.getElementById('sheet-tabs');
+      container.innerHTML = '';
+      state.sheets.forEach((s, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-pill' + (i === state.activeSheet ? ' active' : '');
+        btn.textContent = s.name;
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', String(i === state.activeSheet));
+        btn.onclick = () => switchSheet(i);
+        container.appendChild(btn);
+      });
+    }
+
+    function switchSheet(idx, animate = true) {
+      state.activeSheet = idx;
+      state.page = 1;
+      state.sortCols = [];
+      state.colFilters = {};
+      state.filters = {};
+      state.compareRows.clear();
+      state.groupCollapsed = new Set();
+      state.hiddenCols = new Set();
+
+      const sheet = getActiveSheet();
+      const subsystemIdx = findSubsystemIndex(sheet);
+      state.groupBy = subsystemIdx >= 0 ? subsystemIdx : null;
+
+      document.getElementById('search-input').value = state.search;
+      renderSheetTabs();
+      renderSidebar();
+      updateHash();
+      renderStats();
+      renderColVisibility();
+      applyFilters();
+      renderCharts();
+      updateCompareFab();
+      updateGroupButton();
+
+      if (animate) {
+        const area = document.getElementById('content-area');
+        if (area) area.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // ===== Sidebar =====
+    function renderSidebar() {
+      renderSidebarSummary();
+      renderSidebarSheets();
+      renderSidebarQuickFilters();
+      renderSidebarActiveView();
+      updateSidebarToggle();
+    }
+
+    function renderSidebarSummary() {
+      const sheet = getActiveSheet();
+      const container = document.getElementById('sidebar-workbook-summary');
+      if (!sheet) return;
+
+      let filled = 0;
+      let total = 0;
+      sheet.rows.forEach(row => row.forEach(cell => {
+        total += 1;
+        if ((cell || '').toString().trim()) filled += 1;
+      }));
+      const fillRate = total ? Math.round((filled / total) * 100) : 0;
+
+      container.innerHTML = `
+        <div class="sidebar-meta-grid">
+          <div class="sidebar-meta-card">
+            <div class="sidebar-meta-label">Workbook</div>
+            <div class="sidebar-meta-value">RDK-B Component List 2026</div>
+            <div class="sidebar-meta-sub">${escHtml(sheet.name)} sheet selected</div>
+          </div>
+          <div class="sidebar-meta-card">
+            <div class="sidebar-meta-label">Rows / Columns</div>
+            <div class="sidebar-meta-value">${sheet.rows.length} / ${sheet.headers.length}</div>
+            <div class="sidebar-meta-sub">${fillRate}% fill rate</div>
+          </div>
+          <div class="sidebar-meta-card">
+            <div class="sidebar-meta-label">Current View</div>
+            <div class="sidebar-meta-value">${state.filteredData.length || sheet.rows.length} visible rows</div>
+            <div class="sidebar-meta-sub">${state.hiddenCols.size} hidden columns</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSidebarSheets() {
+      const container = document.getElementById('sidebar-sheet-list');
+      container.innerHTML = '';
+      state.sheets.forEach((sheet, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'sidebar-sheet-btn' + (i === state.activeSheet ? ' active' : '');
+        btn.innerHTML = `<span class="sidebar-sheet-name">${escHtml(sheet.name)}</span><span class="sidebar-sheet-count">${sheet.rows.length}</span>`;
+        btn.onclick = () => switchSheet(i);
+        container.appendChild(btn);
+      });
+    }
+
+    function renderSidebarQuickFilters() {
+      const container = document.getElementById('sidebar-quick-filters');
+      container.innerHTML = '';
+
+      const statusIdx = findStatusIndex();
+      const subsystemIdx = findSubsystemIndex();
+
+      const allBtn = document.createElement('button');
+      allBtn.className = 'sidebar-action-btn';
+      allBtn.textContent = 'Clear Filters';
+      allBtn.onclick = resetFilters;
+      container.appendChild(allBtn);
+
+      const groupBtn = document.createElement('button');
+      groupBtn.className = 'sidebar-action-btn';
+      groupBtn.textContent = state.groupBy === null ? 'Enable Grouping' : 'Disable Grouping';
+      groupBtn.onclick = toggleGrouping;
+      container.appendChild(groupBtn);
+
+      if (statusIdx >= 0) {
+        ['Required', 'Optional', 'Deprecated'].forEach(label => {
+          const btn = document.createElement('button');
+          btn.className = 'sidebar-action-btn';
+          btn.textContent = label;
+          btn.onclick = () => {
+            const sheet = getActiveSheet();
+            const match = sheet.rows
+              .map(r => (r[statusIdx] || '').toString())
+              .find(v => v.toLowerCase().includes(label.toLowerCase()));
+            if (match) {
+              state.colFilters[statusIdx] = match;
+              state.page = 1;
+              applyFilters();
+              toast('Filtered status: ' + label);
+            }
+          };
+          container.appendChild(btn);
+        });
+      }
+
+      if (subsystemIdx >= 0) {
+        const topValues = getTopColumnValues(subsystemIdx, 2);
+        topValues.forEach(value => {
+          const btn = document.createElement('button');
+          btn.className = 'sidebar-action-btn';
+          btn.textContent = value;
+          btn.onclick = () => {
+            state.colFilters[subsystemIdx] = value;
+            state.page = 1;
+            applyFilters();
+            toast('Filtered Sub-System: ' + value);
+          };
+          container.appendChild(btn);
+        });
+      }
+    }
+
+    function renderSidebarActiveView() {
+      const container = document.getElementById('sidebar-active-filters');
+      container.innerHTML = '';
+
+      const pills = [];
+      if (state.search) pills.push('Search: ' + state.search);
+      if (state.groupBy !== null) pills.push('Grouped');
+      if (state.sortCols.length) pills.push('Sort: ' + state.sortCols.map(s => `${getActiveSheet().headers[s.col]} ${s.dir}`).join(', '));
+      Object.entries(state.colFilters).forEach(([col, val]) => {
+        if (val && val !== '__all__') pills.push(`${getActiveSheet().headers[col]}: ${val}`);
+      });
+      if (state.hiddenCols.size) pills.push(`${state.hiddenCols.size} columns hidden`);
+
+      if (!pills.length) {
+        container.innerHTML = '<div class="sidebar-empty">No active filters. Use search, column filters, grouping, or quick actions to narrow the table.</div>';
+        return;
+      }
+
+      const row = document.createElement('div');
+      row.className = 'sidebar-pill-row';
+      pills.forEach(label => {
+        const pill = document.createElement('span');
+        pill.className = 'sidebar-filter-pill';
+        pill.textContent = label;
+        row.appendChild(pill);
+      });
+      container.appendChild(row);
+    }
+
+    function getTopColumnValues(colIdx, limit) {
+      const counts = {};
+      getActiveSheet().rows.forEach(row => {
+        const value = (row[colIdx] || '').toString().trim();
+        if (!value) return;
+        counts[value] = (counts[value] || 0) + 1;
+      });
+      return Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([value]) => value);
+    }
+
+    // ===== Stats =====
+    function renderStats() {
+      const sheet = getActiveSheet();
+      const rows = sheet.rows;
+      const cards = [
+        { label: 'Total Rows', value: rows.length, sub: 'data rows' },
+        { label: 'Columns', value: sheet.headers.length, sub: 'fields' },
+        { label: 'Sheet', value: state.activeSheet + 1, sub: 'of ' + state.sheets.length },
+      ];
+
+      let filled = 0;
+      let total = 0;
+      rows.forEach(r => r.forEach(c => {
+        total += 1;
+        if (c && c.toString().trim()) filled += 1;
+      }));
+      cards.push({ label: 'Fill Rate', value: Math.round((filled / Math.max(total, 1)) * 100) + '%', sub: filled + '/' + total + ' cells' });
+
+      const container = document.getElementById('stat-cards');
+      container.innerHTML = '';
+      cards.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'stat-card';
+        div.innerHTML = `<div class="stat-label">${c.label}</div><div class="stat-value" data-target="${c.value}">${c.value}</div><div class="stat-sub">${c.sub}</div>`;
+        container.appendChild(div);
+      });
+      animateCounters();
+    }
+
+    function animateCounters() {
+      document.querySelectorAll('.stat-value[data-target]').forEach(el => {
+        const raw = el.getAttribute('data-target');
+        if (raw.endsWith('%')) {
+          const end = parseInt(raw, 10);
+          let start = 0;
+          const step = () => {
+            start = Math.min(start + 3, end);
+            el.textContent = start + '%';
+            if (start < end) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        } else if (!isNaN(raw)) {
+          const end = parseInt(raw, 10);
+          let start = 0;
+          const inc = Math.max(1, Math.ceil(end / 40));
+          const step = () => {
+            start = Math.min(start + inc, end);
+            el.textContent = start;
+            if (start < end) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+      });
+    }
+
+    // ===== Column Visibility =====
+    function renderColVisibility() {
+      const sheet = getActiveSheet();
+      const panel = document.getElementById('col-vis-panel');
+      panel.innerHTML = '';
+      sheet.headers.forEach((h, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'col-toggle-chip' + (state.hiddenCols.has(i) ? '' : ' active');
+        chip.textContent = h.replace('\n', ' ');
+        chip.onclick = () => {
+          if (state.hiddenCols.has(i)) state.hiddenCols.delete(i);
+          else state.hiddenCols.add(i);
+          chip.classList.toggle('active');
+          applyFilters();
+        };
+        panel.appendChild(chip);
+      });
+    }
+
+    // ===== Filtering & Search =====
+    function levenshtein(a, b) {
+      const m = a.length;
+      const n = b.length;
+      if (m === 0) return n;
+      if (n === 0) return m;
+      const dp = Array.from({ length: m + 1 }, (_, i) =>
+        Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+      );
+      for (let i = 1; i <= m; i += 1) {
+        for (let j = 1; j <= n; j += 1) {
+          dp[i][j] = a[i - 1] === b[j - 1]
+            ? dp[i - 1][j - 1]
+            : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+      return dp[m][n];
+    }
+
+    function fuzzyMatch(text, query) {
+      if (!query) return true;
+      text = text.toLowerCase();
+      query = query.toLowerCase();
+      if (text.includes(query)) return true;
+      if (query.length >= 4) {
+        const words = text.split(/\s+/);
+        for (const w of words) {
+          if (Math.abs(w.length - query.length) <= 2 && levenshtein(w.slice(0, query.length), query) <= 1) return true;
+        }
+      }
+      return false;
+    }
+
+    function applyFilters() {
+      const sheet = getActiveSheet();
+      let data = sheet.rows.map((row, i) => ({ row, origIdx: i }));
+
+      Object.entries(state.colFilters).forEach(([col, val]) => {
+        if (val && val !== '__all__') {
+          data = data.filter(d => (d.row[col] || '').toString() === val);
+        }
+      });
+
+      if (state.search) {
+        data = data.filter(d => d.row.some(c => fuzzyMatch((c || '').toString(), state.search)));
+      }
+
+      if (state.sortCols.length) {
+        data.sort((a, b) => {
+          for (const { col, dir } of state.sortCols) {
+            const va = (a.row[col] || '').toString();
+            const vb = (b.row[col] || '').toString();
+            const n = va.localeCompare(vb, undefined, { numeric: true, sensitivity: 'base' });
+            if (n !== 0) return dir === 'asc' ? n : -n;
+          }
+          return 0;
+        });
+      }
+
+      state.filteredData = data;
+
+      const announce = document.getElementById('sr-announce');
+      if (announce) announce.textContent = `${data.length} rows found`;
+
+      renderTable();
+      renderPagination();
+      renderSidebarSummary();
+      renderSidebarActiveView();
+      updateHash();
+      updateGroupButton();
+    }
+
+    // ===== Charts =====
+    function renderCharts() {
+      renderDonutChart();
+      renderBarChart();
+    }
+
+    function themeVar(name, fallback) {
+      const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return value || fallback;
+    }
+
+    function renderDonutChart() {
+      const canvas = document.getElementById('donut-canvas');
+      if (!canvas) return;
+      const sheet = getActiveSheet();
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const ssIdx = findSubsystemIndex(sheet);
+      if (ssIdx < 0) {
+        ctx.fillStyle = themeVar('--text-muted', '#64748b');
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillText('No Sub-System column', 12, 24);
+        return;
+      }
+
+      const counts = {};
+      sheet.rows.forEach(r => {
+        const v = (r[ssIdx] || 'Unknown').toString();
+        counts[v] = (counts[v] || 0) + 1;
+      });
+      const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const total = entries.reduce((s, [, v]) => s + v, 0);
+      if (!entries.length) return;
+
+      const cx = W / 2 - 40;
+      const cy = H / 2;
+      const R = Math.min(cx, cy) - 20;
+      const r = R * 0.55;
+      let angle = -Math.PI / 2;
+
+      const segments = entries.map(([label, count], i) => {
+        const sweep = (count / total) * 2 * Math.PI;
+        const start = angle;
+        const end = angle + sweep;
+        angle = end;
+        return { label, count, start, end, color: PALETTE[i % PALETTE.length] };
+      });
+
+      segments.forEach(s => {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, R, s.start, s.end);
+        ctx.closePath();
+        ctx.fillStyle = s.color;
+        ctx.fill();
+        ctx.strokeStyle = themeVar('--bg-card', '#fff');
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.fillStyle = themeVar('--bg-card', '#fff');
+      ctx.fill();
+
+      ctx.fillStyle = themeVar('--text-primary', '#0f172a');
+      ctx.font = 'bold 18px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(total, cx, cy + 6);
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillStyle = themeVar('--text-muted', '#64748b');
+      ctx.fillText('total', cx, cy + 20);
+
+      const lx = W - 130;
+      ctx.textAlign = 'left';
+      entries.forEach(([label, count], i) => {
+        const ly = 20 + i * 20;
+        ctx.fillStyle = PALETTE[i % PALETTE.length];
+        ctx.fillRect(lx, ly - 8, 12, 12);
+        ctx.fillStyle = themeVar('--text-secondary', '#475569');
+        ctx.font = '10px Inter, sans-serif';
+        const short = label.length > 14 ? label.slice(0, 13) + '…' : label;
+        ctx.fillText(`${short} (${count})`, lx + 16, ly);
+      });
+
+      canvas._segments = segments.map(s => ({ ...s, cx, cy, R, r, colIdx: ssIdx }));
+      canvas.onclick = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const mx = x - cx;
+        const my = y - cy;
+        const dist = Math.sqrt(mx * mx + my * my);
+        if (dist <= r || dist >= R) return;
+
+        let a = Math.atan2(my, mx);
+        if (a < -Math.PI / 2) a += 2 * Math.PI;
+        const seg = canvas._segments.find(sg => a >= sg.start && a <= sg.end);
+        if (!seg) return;
+
+        state.colFilters[seg.colIdx] = state.colFilters[seg.colIdx] === seg.label ? '__all__' : seg.label;
+        const sel = document.querySelector(`.col-filter-select[data-col="${seg.colIdx}"]`);
+        if (sel) sel.value = state.colFilters[seg.colIdx] || '__all__';
+        state.page = 1;
+        applyFilters();
+        toast(`Filtered: ${seg.label}`);
+      };
+    }
+
+    function renderBarChart() {
+      const canvas = document.getElementById('bar-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const data = state.sheets.map((s, i) => ({
+        name: s.name,
+        count: s.rows.length,
+        color: PALETTE[i % PALETTE.length],
+      }));
+      const maxVal = Math.max(...data.map(d => d.count), 1);
+      const barH = 28;
+      const gap = 10;
+      const padL = 90;
+      const padR = 36;
+      const padT = 10;
+
+      data.forEach(({ name, count, color }, i) => {
+        const y = padT + i * (barH + gap);
+        const bw = Math.round((count / maxVal) * (W - padL - padR));
+        ctx.fillStyle = color;
+        if (typeof ctx.roundRect === 'function') {
+          ctx.beginPath();
+          ctx.roundRect(padL, y, bw, barH, 4);
+          ctx.fill();
+        } else {
+          ctx.fillRect(padL, y, bw, barH);
+        }
+
+        ctx.fillStyle = themeVar('--text-secondary', '#475569');
+        ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(name, padL - 8, y + barH / 2 + 4);
+
+        ctx.fillStyle = themeVar('--text-primary', '#0f172a');
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.fillText(count, Math.min(padL + bw + 6, W - 24), y + barH / 2 + 4);
+      });
+    }
+
+    // ===== Table Rendering =====
+    function renderTable() {
+      const sheet = getActiveSheet();
+      const headers = sheet.headers;
+      const table = document.getElementById('data-table');
+      const visHeaders = headers.map((h, i) => ({ h, i })).filter(x => !state.hiddenCols.has(x.i));
+      const thead = table.querySelector('thead');
+      const tbody = table.querySelector('tbody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      const hmRow = document.createElement('tr');
+      hmRow.className = 'heatmap-row';
+      const hmCb = document.createElement('th');
+      hmCb.style.background = 'var(--bg-secondary)';
+      hmRow.appendChild(hmCb);
+
+      visHeaders.forEach(({ h, i }) => {
+        const th = document.createElement('th');
+        const col = sheet.rows.map(r => r[i] || '');
+        const pct = Math.round(col.filter(v => v.toString().trim()).length / Math.max(col.length, 1) * 100);
+        const hue = Math.round(pct * 1.2);
+        th.style.cssText = `background: hsl(${hue}, 60%, 90%) !important; color: #333 !important;`;
+        th.textContent = pct + '%';
+        th.title = h.replace('\n', ' ') + ': ' + pct + '% filled';
+        hmRow.appendChild(th);
+      });
+      thead.appendChild(hmRow);
+
+      const headerRow = document.createElement('tr');
+      const cbTh = document.createElement('th');
+      cbTh.style.width = '36px';
+      headerRow.appendChild(cbTh);
+
+      visHeaders.forEach(({ h, i }) => {
+        const th = document.createElement('th');
+        th.style.position = 'relative';
+        if (state.colWidths[i]) {
+          th.style.width = state.colWidths[i] + 'px';
+          th.style.minWidth = state.colWidths[i] + 'px';
+        }
+
+        const sortInfo = state.sortCols.find(s => s.col === i);
+        const sortPriority = state.sortCols.findIndex(s => s.col === i) + 1;
+
+        const label = document.createElement('span');
+        label.textContent = h.replace('\n', ' ');
+        th.appendChild(label);
+
+        if (sortInfo) {
+          const badge = document.createElement('span');
+          badge.className = 'sort-badge';
+          badge.textContent = sortPriority;
+          th.appendChild(badge);
+
+          const arrow = document.createElement('span');
+          arrow.className = 'sort-arrow';
+          arrow.textContent = sortInfo.dir === 'asc' ? '↑' : '↓';
+          th.appendChild(arrow);
+        }
+
+        th.onclick = (e) => {
+          if (e.target.closest('select') || e.target.closest('.col-resize')) return;
+          if (e.shiftKey) {
+            const existing = state.sortCols.find(s => s.col === i);
+            if (existing) existing.dir = existing.dir === 'asc' ? 'desc' : 'asc';
+            else state.sortCols.push({ col: i, dir: 'asc' });
+          } else {
+            const existing = state.sortCols.find(s => s.col === i);
+            if (existing && state.sortCols.length === 1) existing.dir = existing.dir === 'asc' ? 'desc' : 'asc';
+            else state.sortCols = [{ col: i, dir: 'asc' }];
+          }
+          applyFilters();
+        };
+
+        const vals = [...new Set(sheet.rows.map(r => (r[i] || '').toString()).filter(v => v.trim()))].sort((a, b) =>
+          a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+        );
+        if (vals.length < 50 && vals.length > 0) {
+          const sel = document.createElement('select');
+          sel.className = 'col-filter-select';
+          sel.dataset.col = i;
+          const allOpt = document.createElement('option');
+          allOpt.value = '__all__';
+          allOpt.textContent = 'All';
+          sel.appendChild(allOpt);
+          vals.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v.length > 30 ? v.slice(0, 29) + '…' : v;
+            sel.appendChild(opt);
+          });
+          sel.value = state.colFilters[i] || '__all__';
+          sel.onclick = e => e.stopPropagation();
+          sel.onchange = (e) => {
+            state.colFilters[i] = e.target.value;
+            state.page = 1;
+            applyFilters();
+          };
+          th.appendChild(sel);
+        }
+
+        const rh = document.createElement('div');
+        rh.className = 'col-resize';
+        let startX;
+        let startW;
+        rh.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          startX = e.clientX;
+          startW = th.offsetWidth;
+          rh.classList.add('active');
+          const onMove = (ev) => {
+            const w = Math.max(60, startW + ev.clientX - startX);
+            state.colWidths[i] = w;
+            th.style.minWidth = w + 'px';
+            th.style.width = w + 'px';
+          };
+          const onUp = () => {
+            rh.classList.remove('active');
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+          };
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+        th.appendChild(rh);
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      const totalPages = Math.max(1, Math.ceil(state.filteredData.length / state.pageSize));
+      if (state.page > totalPages) state.page = totalPages;
+
+      const start = (state.page - 1) * state.pageSize;
+      const end = start + state.pageSize;
+      const pageData = state.filteredData.slice(start, end);
+
+      const shouldGroup = state.groupBy !== null && !state.search && !Object.values(state.colFilters).some(v => v && v !== '__all__');
+      if (shouldGroup) {
+        const groups = {};
+        pageData.forEach(d => {
+          const key = (d.row[state.groupBy] || 'Unknown').toString();
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(d);
+        });
+
+        Object.entries(groups).forEach(([key, rows]) => {
+          const collapsed = state.groupCollapsed.has(key);
+          const gr = document.createElement('tr');
+          gr.className = 'group-row' + (collapsed ? ' collapsed' : '');
+          const td = document.createElement('td');
+          td.colSpan = visHeaders.length + 1;
+          td.innerHTML = `<span class="group-chevron">▾</span> ${escHtml(key)} <span class="group-badge">${rows.length}</span>`;
+          gr.appendChild(td);
+          gr.onclick = () => {
+            if (collapsed) state.groupCollapsed.delete(key);
+            else state.groupCollapsed.add(key);
+            renderTable();
+          };
+          tbody.appendChild(gr);
+
+          if (!collapsed) rows.forEach(d => tbody.appendChild(buildRow(d, visHeaders)));
+        });
+      } else {
+        pageData.forEach(d => tbody.appendChild(buildRow(d, visHeaders)));
+      }
+
+      if (!pageData.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = visHeaders.length + 1;
+        td.style.padding = '24px 12px';
+        td.style.color = themeVar('--text-muted', '#64748b');
+        td.textContent = 'No results match the current filters.';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      }
+    }
+
+    function buildRow(d, visHeaders) {
+      const tr = document.createElement('tr');
+      tr.dataset.origIdx = d.origIdx;
+      tr.tabIndex = 0;
+
+      const cbTd = document.createElement('td');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'row-compare-cb';
+      cb.checked = state.compareRows.has(d.origIdx);
+      cb.setAttribute('aria-label', 'Select row for comparison');
+      cb.onchange = () => {
+        if (cb.checked) state.compareRows.add(d.origIdx);
+        else state.compareRows.delete(d.origIdx);
+        updateCompareFab();
+      };
+      cbTd.appendChild(cb);
+      tr.appendChild(cbTd);
+
+      visHeaders.forEach(({ h, i }) => {
+        const td = document.createElement('td');
+        const val = (d.row[i] || '').toString();
+
+        if (val.startsWith('http')) {
+          const a = document.createElement('a');
+          a.className = 'cell-link';
+          a.href = val;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = '🔗 Link';
+          td.appendChild(a);
+        } else if (h.toLowerCase().includes('status') && val) {
+          const badge = document.createElement('span');
+          const lower = val.toLowerCase();
+          const cls = lower.includes('required')
+            ? 'status-required'
+            : lower.includes('optional')
+              ? 'status-optional'
+              : lower.includes('deprecat')
+                ? 'status-deprecated'
+                : '';
+          badge.className = cls ? `status-badge ${cls}` : 'status-badge';
+          badge.textContent = val;
+          td.appendChild(badge);
+        } else if (val.length > 80) {
+          const span = document.createElement('span');
+          span.className = 'cell-text';
+          if (state.search && val.toLowerCase().includes(state.search.toLowerCase())) {
+            const re = new RegExp('(' + escRegex(state.search) + ')', 'gi');
+            span.innerHTML = escHtml(val).replace(re, '<mark>$1</mark>');
+          } else {
+            span.textContent = val;
+          }
+          const btn = document.createElement('span');
+          btn.className = 'cell-expand-btn';
+          btn.textContent = '⊞';
+          btn.onclick = (e) => showCellPopover(e, val);
+          td.appendChild(span);
+          td.appendChild(document.createTextNode(' '));
+          td.appendChild(btn);
+        } else {
+          if (state.search && val.toLowerCase().includes(state.search.toLowerCase())) {
+            const span = document.createElement('span');
+            span.className = 'cell-text';
+            const re = new RegExp('(' + escRegex(state.search) + ')', 'gi');
+            span.innerHTML = escHtml(val).replace(re, '<mark>$1</mark>');
+            td.appendChild(span);
+          } else {
+            td.textContent = val;
+          }
+        }
+        tr.appendChild(td);
+      });
+
+      return tr;
+    }
+
+    // ===== Cell Popover =====
+    function showCellPopover(e, text) {
+      e.stopPropagation();
+      const pop = document.getElementById('cell-popover');
+      pop.querySelector('#cell-popover-text').textContent = text;
+      pop.classList.add('visible');
+      let x = e.clientX + 10;
+      let y = e.clientY + 10;
+      if (x + 380 > window.innerWidth) x = e.clientX - 380;
+      if (y + 200 > window.innerHeight) y = e.clientY - 200;
+      pop.style.left = x + 'px';
+      pop.style.top = y + 'px';
+    }
+
+    document.addEventListener('click', (e) => {
+      const pop = document.getElementById('cell-popover');
+      if (pop && !pop.contains(e.target)) pop.classList.remove('visible');
+    });
+
+    // ===== Pagination =====
+    function renderPagination() {
+      const total = state.filteredData.length;
+      const pages = Math.max(1, Math.ceil(total / state.pageSize));
+      if (state.page > pages) state.page = pages;
+      const container = document.getElementById('pagination');
+      container.innerHTML = '';
+
+      const info = document.createElement('span');
+      info.style.cssText = 'font-size:0.8rem;color:var(--text-muted);margin-right:auto';
+      const start = total ? (state.page - 1) * state.pageSize + 1 : 0;
+      const end = Math.min(state.page * state.pageSize, total);
+      info.textContent = total > 0 ? `${start}–${end} of ${total}` : '0 results';
+      container.appendChild(info);
+
+      const sel = document.createElement('select');
+      sel.id = 'rows-per-page';
+      [10, 25, 50, 100].forEach(n => {
+        const o = document.createElement('option');
+        o.value = n;
+        o.textContent = n + ' / page';
+        if (n === state.pageSize) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.onchange = (e) => {
+        state.pageSize = +e.target.value;
+        state.page = 1;
+        applyFilters();
+      };
+      container.appendChild(sel);
+
+      if (pages <= 1) return;
+
+      const prev = document.createElement('button');
+      prev.className = 'page-btn';
+      prev.textContent = '←';
+      prev.disabled = state.page === 1;
+      prev.onclick = () => {
+        state.page -= 1;
+        applyFilters();
+      };
+      container.appendChild(prev);
+
+      pageRange(state.page, pages).forEach(p => {
+        if (p === '…') {
+          const span = document.createElement('span');
+          span.textContent = '…';
+          span.style.padding = '0 4px';
+          container.appendChild(span);
+          return;
+        }
+        const btn = document.createElement('button');
+        btn.className = 'page-btn' + (p === state.page ? ' active' : '');
+        btn.textContent = p;
+        btn.onclick = () => {
+          state.page = p;
+          applyFilters();
+        };
+        container.appendChild(btn);
+      });
+
+      const next = document.createElement('button');
+      next.className = 'page-btn';
+      next.textContent = '→';
+      next.disabled = state.page === pages;
+      next.onclick = () => {
+        state.page += 1;
+        applyFilters();
+      };
+      container.appendChild(next);
+    }
+
+    function pageRange(cur, total) {
+      if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+      const r = [1];
+      if (cur > 3) r.push('…');
+      for (let p = Math.max(2, cur - 1); p <= Math.min(total - 1, cur + 1); p += 1) r.push(p);
+      if (cur < total - 2) r.push('…');
+      r.push(total);
+      return r;
+    }
+
+    // ===== Compare =====
+    function updateCompareFab() {
+      const fab = document.getElementById('compare-fab');
+      if (state.compareRows.size >= 2) {
+        fab.style.display = 'flex';
+        fab.querySelector('.compare-count').textContent = state.compareRows.size;
+      } else {
+        fab.style.display = 'none';
+      }
+    }
+
+    function openComparePanel() {
+      const sheet = getActiveSheet();
+      const panel = document.getElementById('compare-panel');
+      const body = document.getElementById('compare-body');
+      const rows = [...state.compareRows].map(i => sheet.rows[i]).filter(Boolean);
+      if (rows.length < 2) {
+        toast('Select at least two rows to compare');
+        return;
+      }
+
+      const differingCols = new Set();
+      sheet.headers.forEach((_, hi) => {
+        const values = rows.map(r => (r[hi] || '').toString());
+        if (values.some(v => v !== values[0])) differingCols.add(hi);
+      });
+
+      let html = '<div class="compare-grid" style="grid-template-columns:' + rows.map(() => '1fr').join(' ') + ';">';
+      rows.forEach((r, ri) => {
+        html += `<div class="compare-col"><div class="sidebar-meta-card" style="margin-bottom:12px"><div class="sidebar-meta-label">Row</div><div class="sidebar-meta-value">${ri + 1}</div></div>`;
+        sheet.headers.forEach((h, hi) => {
+          const val = escHtml((r[hi] || '').toString());
+          const klass = differingCols.has(hi) ? 'compare-value compare-diff' : 'compare-value';
+          html += `<div class="compare-field"><strong>${escHtml(h.replace('\n', ' '))}</strong><div class="${klass}">${val || '—'}</div></div>`;
+        });
+        html += '</div>';
+      });
+      html += '</div>';
+      body.innerHTML = html;
+      panel.classList.add('open');
+    }
+
+    // ===== Search =====
+    function handleSearch(val) {
+      state.search = val.trim();
+      state.page = 1;
+
+      if (state.search) {
+        addSearchHistory(state.search);
+        renderGlobalSearch(state.search);
+      } else {
+        document.getElementById('global-search-panel').classList.remove('visible');
+      }
+
+      applyFilters();
+    }
+
+    function addSearchHistory(q) {
+      state.searchHistory = [q, ...state.searchHistory.filter(h => h !== q)].slice(0, 5);
+      localStorage.setItem('searchHistory', JSON.stringify(state.searchHistory));
+      renderSearchHistory();
+    }
+
+    function renderSearchHistory() {
+      const container = document.getElementById('search-history');
+      container.innerHTML = '';
+      state.searchHistory.forEach(q => {
+        const chip = document.createElement('span');
+        chip.className = 'history-chip';
+        chip.textContent = q;
+        chip.onclick = () => {
+          document.getElementById('search-input').value = q;
+          handleSearch(q);
+        };
+        container.appendChild(chip);
+      });
+    }
+
+    function renderGlobalSearch(q) {
+      const panel = document.getElementById('global-search-panel');
+      panel.innerHTML = '';
+      let hasResults = false;
+
+      state.sheets.forEach((sheet, si) => {
+        const matches = sheet.rows
+          .map((r, ri) => ({ row: r, ri }))
+          .filter(({ row }) => row.some(c => fuzzyMatch((c || '').toString(), q)));
+        if (!matches.length) return;
+        hasResults = true;
+
+        const group = document.createElement('div');
+        group.className = 'global-sheet-group';
+        group.innerHTML = `<div class="global-sheet-label">${escHtml(sheet.name)} <span class="global-badge">${matches.length}</span></div>`;
+
+        matches.slice(0, 5).forEach(({ row, ri }) => {
+          const matchCell = row.find(c => fuzzyMatch((c || '').toString(), q));
+          const div = document.createElement('div');
+          div.className = 'global-result-row';
+          div.textContent = `Row ${ri + 1}: ${(matchCell || '').toString().slice(0, 80)}`;
+          div.onclick = () => switchSheet(si);
+          group.appendChild(div);
+        });
+
+        if (matches.length > 5) {
+          const more = document.createElement('div');
+          more.style.cssText = 'font-size:0.75rem;color:var(--text-muted);cursor:pointer';
+          more.textContent = `+${matches.length - 5} more…`;
+          more.onclick = () => switchSheet(si);
+          group.appendChild(more);
+        }
+        panel.appendChild(group);
+      });
+
+      panel.classList.toggle('visible', hasResults);
+    }
+
+    // ===== Command Palette =====
+    function getCommandActions() {
+      const sheetActions = state.sheets.map((s, i) => ({
+        icon: '📊',
+        name: s.name + ' Sheet',
+        desc: `${s.rows.length} rows · ${s.headers.length} columns`,
+        action: () => switchSheet(i),
+      }));
+
+      const actionItems = [
+        { icon: '📥', name: 'Export CSV', desc: 'Download filtered data as CSV', action: exportCSV },
+        { icon: '📄', name: 'Export JSON', desc: 'Download workbook as JSON', action: exportJSON },
+        { icon: '🔗', name: 'Copy URL', desc: 'Copy shareable link', action: copyURL },
+        { icon: '🖨️', name: 'Print View', desc: 'Open print dialog', action: () => window.print() },
+        { icon: '🌙', name: 'Toggle Dark Mode', desc: 'Switch light/dark theme', action: toggleTheme },
+        { icon: '🔄', name: 'Reset Filters', desc: 'Clear all filters', action: resetFilters },
+        { icon: '👁️', name: 'Toggle Columns', desc: 'Jump to column visibility panel', action: () => document.getElementById('col-vis-panel').scrollIntoView({ behavior: 'smooth' }) },
+        { icon: '⊞', name: 'Toggle Grouping', desc: 'Group or ungroup rows by Sub-System', action: toggleGrouping },
+      ];
+
+      return { sheetActions, actionItems };
+    }
+
+    function openCmdPalette() {
+      document.getElementById('cmd-overlay').classList.add('open');
+      document.getElementById('cmd-input').value = '';
+      renderCmdResults();
+      setTimeout(() => document.getElementById('cmd-input').focus(), 50);
+    }
+
+    function closeCmdPalette() {
+      document.getElementById('cmd-overlay').classList.remove('open');
+    }
+
+    function renderCmdResults(q = '') {
+      const container = document.getElementById('cmd-results');
+      container.innerHTML = '';
+
+      const { sheetActions, actionItems } = getCommandActions();
+      const filteredSheets = q ? sheetActions.filter(a => fuzzyMatch(a.name, q) || fuzzyMatch(a.desc, q)) : sheetActions;
+      const filteredActions = q ? actionItems.filter(a => fuzzyMatch(a.name, q) || fuzzyMatch(a.desc, q)) : actionItems;
+
+      if (filteredSheets.length) {
+        const label = document.createElement('div');
+        label.className = 'cmd-group-label';
+        label.textContent = 'Sheets';
+        container.appendChild(label);
+        filteredSheets.forEach(a => container.appendChild(buildCmdItem(a)));
+      }
+
+      if (filteredActions.length) {
+        const label = document.createElement('div');
+        label.className = 'cmd-group-label';
+        label.textContent = 'Actions';
+        container.appendChild(label);
+        filteredActions.forEach(a => container.appendChild(buildCmdItem(a)));
+      }
+
+      cmdItems = [...filteredSheets, ...filteredActions];
+      cmdSelected = 0;
+      const items = container.querySelectorAll('.cmd-item');
+      items.forEach((el, i) => el.classList.toggle('selected', i === 0));
+    }
+
+    function buildCmdItem(action) {
+      const div = document.createElement('div');
+      div.className = 'cmd-item';
+      div.innerHTML = `<div class="cmd-icon">${action.icon}</div><div><div class="cmd-name">${escHtml(action.name)}</div><div class="cmd-desc">${escHtml(action.desc)}</div></div>`;
+      div.onclick = () => {
+        action.action();
+        closeCmdPalette();
+      };
+      return div;
+    }
+
+    // ===== Export =====
+    function exportCSV() {
+      const sheet = getActiveSheet();
+      const visHeaders = sheet.headers.filter((_, i) => !state.hiddenCols.has(i));
+      const visIdxs = sheet.headers.map((_, i) => i).filter(i => !state.hiddenCols.has(i));
+      const rows = [visHeaders, ...state.filteredData.map(d => visIdxs.map(i => d.row[i] || ''))];
+      const csv = rows.map(r => r.map(c => '"' + c.toString().replace(/"/g, '""') + '"').join(',')).join('\n');
+      download('export.csv', csv, 'text/csv');
+      toast(`CSV exported — ${state.filteredData.length} rows`);
+    }
+
+    function exportJSON() {
+      const el = document.getElementById('workbook' + '-data');
+      download('workbook.json', el.textContent, 'application/json');
+      toast('JSON exported');
+    }
+
+    function copyURL() {
+      updateHash();
+      copyText(location.href)
+        .then(() => toast('🔗 URL copied!'))
+        .catch(() => toast('Unable to copy URL'));
+    }
+
+    function download(name, data, type) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([data], { type }));
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    function resetFilters() {
+      state.colFilters = {};
+      state.search = '';
+      state.sortCols = [];
+      state.page = 1;
+      document.getElementById('search-input').value = '';
+      document.getElementById('global-search-panel').classList.remove('visible');
+      applyFilters();
+      toast('Filters cleared');
+    }
+
+    function toggleGrouping() {
+      const subsystemIdx = findSubsystemIndex();
+      if (subsystemIdx < 0) {
+        toast('No Sub-System column available for grouping');
+        return;
+      }
+      state.groupBy = state.groupBy === null ? subsystemIdx : null;
+      state.groupCollapsed.clear();
+      updateGroupButton();
+      applyFilters();
+      toast(state.groupBy === null ? 'Grouping disabled' : 'Grouping enabled');
+    }
+
+    function updateGroupButton() {
+      const btn = document.getElementById('group-toggle-btn');
+      if (!btn) return;
+      btn.textContent = state.groupBy === null ? '⊞ Group' : '⊟ Ungroup';
+      btn.setAttribute('aria-pressed', String(state.groupBy !== null));
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise((resolve, reject) => {
+        const input = document.createElement('textarea');
+        input.value = text;
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.focus();
+        input.select();
+        try {
+          const ok = document.execCommand('copy');
+          input.remove();
+          ok ? resolve() : reject(new Error('copy failed'));
+        } catch (err) {
+          input.remove();
+          reject(err);
+        }
+      });
+    }
+
+    // ===== Nav bindings =====
+    function bindNav() {
+      document.getElementById('dark-toggle').onclick = toggleTheme;
+      document.getElementById('cmd-btn').onclick = openCmdPalette;
+      document.getElementById('export-csv-btn').onclick = exportCSV;
+      document.getElementById('export-json-btn').onclick = exportJSON;
+      document.getElementById('copy-url-btn').onclick = copyURL;
+      document.getElementById('print-btn').onclick = () => window.print();
+      document.getElementById('group-toggle-btn').onclick = toggleGrouping;
+
+      const searchInput = document.getElementById('search-input');
+      let searchTimeout;
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => handleSearch(e.target.value), 250);
+      });
+
+      document.getElementById('reset-filters-btn').onclick = resetFilters;
+      document.getElementById('compare-fab').onclick = openComparePanel;
+      document.getElementById('compare-fab').onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openComparePanel();
+        }
+      };
+      document.getElementById('compare-close').onclick = () => document.getElementById('compare-panel').classList.remove('open');
+      document.getElementById('cell-popover-close').onclick = () => document.getElementById('cell-popover').classList.remove('visible');
+
+      document.getElementById('cmd-input').addEventListener('input', (e) => renderCmdResults(e.target.value));
+      document.getElementById('cmd-overlay').onclick = (e) => {
+        if (e.target === document.getElementById('cmd-overlay')) closeCmdPalette();
+      };
+
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      if (sidebarToggle) sidebarToggle.onclick = toggleSidebar;
+
+      window.addEventListener('resize', () => {
+        updateSidebarToggle();
+        renderCharts();
+      });
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      if (window.innerWidth <= 768) sidebar.classList.toggle('mobile-open');
+      else sidebar.classList.toggle('collapsed');
+      updateSidebarToggle();
+      setTimeout(renderCharts, 350);
+    }
+
+    function updateSidebarToggle() {
+      const sidebar = document.getElementById('sidebar');
+      const toggle = document.querySelector('.sidebar-toggle');
+      if (!sidebar || !toggle) return;
+      if (window.innerWidth <= 768) {
+        toggle.textContent = sidebar.classList.contains('mobile-open') ? '⌄' : '⌃';
+      } else {
+        sidebar.classList.remove('mobile-open');
+        toggle.textContent = sidebar.classList.contains('collapsed') ? '›' : '‹';
+      }
+    }
+
+    function bindKeyboard() {
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          if (document.getElementById('cmd-overlay').classList.contains('open')) closeCmdPalette();
+          else openCmdPalette();
+          return;
+        }
+
+        if (e.key === 'Escape') {
+          closeCmdPalette();
+          document.getElementById('compare-panel').classList.remove('open');
+          document.getElementById('cell-popover').classList.remove('visible');
+          return;
+        }
+
+        if (document.getElementById('cmd-overlay').classList.contains('open')) {
+          const items = document.querySelectorAll('#cmd-results .cmd-item');
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            cmdSelected = Math.min(cmdSelected + 1, Math.max(items.length - 1, 0));
+            items.forEach((el, i) => el.classList.toggle('selected', i === cmdSelected));
+            items[cmdSelected]?.scrollIntoView({ block: 'nearest' });
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            cmdSelected = Math.max(cmdSelected - 1, 0);
+            items.forEach((el, i) => el.classList.toggle('selected', i === cmdSelected));
+            items[cmdSelected]?.scrollIntoView({ block: 'nearest' });
+          }
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            items[cmdSelected]?.click();
+          }
+          return;
+        }
+
+        if (e.target.tagName === 'TR') {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.target.nextElementSibling?.focus();
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.target.previousElementSibling?.focus();
+          }
+        }
+      });
+    }
+
+    // ===== Toast =====
+    function toast(msg) {
+      const container = document.getElementById('toast-container');
+      const div = document.createElement('div');
+      div.className = 'toast';
+      div.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+
+    // ===== Helpers =====
+    function escHtml(s) {
+      return (s || '').toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escRegex(s) {
+      return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    '''
+).strip()
+
+
+def build_html(workbook_tag: str) -> str:
+    return textwrap.dedent(
+        f'''\
+        <!DOCTYPE html>
+        <html lang="en" data-theme="light">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="description" content="Interactive RDK-B Component List 2026 workbook viewer">
+          <meta name="color-scheme" content="light dark">
+          <title>RDK-B Component List 2026</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <style>
+        {CSS}
+          </style>
+        </head>
+        <body>
+          <div id="progress-bar"></div>
+          <div id="toast-container"></div>
+          <div id="sr-announce" aria-live="polite" aria-atomic="true"></div>
+
+          <nav id="nav" role="navigation" aria-label="Main navigation">
+            <a class="logo" href="#" aria-label="RDK-B Component List Home">
+              <div class="logo-icon">📡</div>
+              <span class="logo-text">RDK-B Component List 2026</span>
+            </a>
+            <div class="spacer"></div>
+            <button class="nav-btn" id="cmd-btn" aria-label="Command palette (Ctrl+K)">⌘ <span>Ctrl+K</span></button>
+            <button class="nav-btn" id="export-csv-btn" aria-label="Export CSV">📥 <span>CSV</span></button>
+            <button class="nav-btn" id="export-json-btn" aria-label="Export JSON">📄 <span>JSON</span></button>
+            <button class="nav-btn" id="copy-url-btn" aria-label="Copy URL">🔗 <span>Share</span></button>
+            <button class="nav-btn" id="print-btn" aria-label="Print">🖨️</button>
+            <button class="nav-btn" id="dark-toggle" aria-label="Toggle dark mode">🌙</button>
+          </nav>
+
+          <div id="app">
+            <aside id="sidebar" role="complementary" aria-label="Sidebar">
+              <div class="sidebar-section">
+                <div class="sidebar-title">Workbook</div>
+                <div id="sidebar-workbook-summary"></div>
+              </div>
+              <div class="sidebar-section">
+                <div class="sidebar-title">Sheets</div>
+                <div id="sidebar-sheet-list" class="sidebar-list"></div>
+              </div>
+              <div class="sidebar-section">
+                <div class="sidebar-title">Quick Actions</div>
+                <div id="sidebar-quick-filters" class="sidebar-actions"></div>
+              </div>
+              <div class="sidebar-section">
+                <div class="sidebar-title">Active View</div>
+                <div id="sidebar-active-filters"></div>
+              </div>
+              <div class="sidebar-section">
+                <div class="sidebar-title">Tips</div>
+                <div class="sidebar-legend">
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--brand-teal)"></span><span>Shift-click headers for multi-sort.</span></div>
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--accent-amber)"></span><span>Select 2+ rows to open compare mode.</span></div>
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--success)"></span><span>Use <span class="kbd">Ctrl</span> + <span class="kbd">K</span> for quick navigation.</span></div>
+                </div>
+              </div>
+              <div class="sidebar-section">
+                <div class="sidebar-title">Legend</div>
+                <p class="section-note">Sticky headers, fuzzy search, export tools, visual fill-rate heatmap, row comparison, URL sharing, and light/dark themes are all built into this single-file workbook viewer.</p>
+              </div>
+            </aside>
+            <button class="sidebar-toggle" aria-label="Toggle sidebar">‹</button>
+
+            <main id="main" role="main">
+              <div id="sheet-tabs" role="tablist" aria-label="Sheet selection"></div>
+
+              <div id="content-area">
+                <div id="skeleton-loader">
+                  <div class="skeleton" style="height:22px;width:40%;margin-bottom:12px"></div>
+                  <div class="skeleton" style="height:84px;margin-bottom:12px"></div>
+                  <div class="skeleton" style="height:220px;margin-bottom:12px"></div>
+                  <div class="skeleton" style="height:42px;margin-bottom:12px"></div>
+                  <div class="skeleton" style="height:320px"></div>
+                </div>
+
+                <div id="main-content" style="display:none">
+                  <div id="stat-cards" aria-label="Summary statistics"></div>
+
+                  <div id="charts-row">
+                    <div class="chart-card">
+                      <div class="chart-title">Sub-System Distribution</div>
+                      <canvas id="donut-canvas" width="420" height="220"></canvas>
+                    </div>
+                    <div class="chart-card">
+                      <div class="chart-title">Rows per Sheet</div>
+                      <canvas id="bar-canvas" width="360" height="140"></canvas>
+                    </div>
+                  </div>
+
+                  <div id="toolbar">
+                    <div id="search-wrapper">
+                      <span class="search-icon">🔍</span>
+                      <input id="search-input" type="search" placeholder="Search all columns… (fuzzy)" aria-label="Search table data">
+                    </div>
+                    <button class="toolbar-btn" id="reset-filters-btn">✕ Reset</button>
+                    <button class="toolbar-btn primary" id="group-toggle-btn" aria-pressed="true">⊞ Group</button>
+                  </div>
+
+                  <div id="search-history" role="list" aria-label="Search history"></div>
+                  <div id="global-search-panel" aria-label="Global search results"></div>
+
+                  <div id="col-vis-panel" class="col-vis-panel" role="group" aria-label="Column visibility"></div>
+
+                  <div id="table-wrapper" role="region" aria-label="Data table">
+                    <table id="data-table" role="grid" aria-label="RDK-B Component data">
+                      <thead></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+
+                  <nav id="pagination" aria-label="Table pagination"></nav>
+                </div>
+              </div>
+            </main>
+          </div>
+
+          <div id="compare-fab" role="button" tabindex="0" aria-label="Compare selected rows">
+            Compare <span class="compare-count">2</span> rows
+          </div>
+
+          <aside id="compare-panel" role="complementary" aria-label="Row comparison">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h3>Row Comparison</h3>
+              <button id="compare-close" class="toolbar-btn">✕ Close</button>
+            </div>
+            <div id="compare-body"></div>
+          </aside>
+
+          <div id="cell-popover" role="tooltip" aria-label="Cell content">
+            <button id="cell-popover-close" aria-label="Close">✕</button>
+            <div id="cell-popover-text"></div>
+          </div>
+
+          <div id="cmd-overlay" role="dialog" aria-modal="true" aria-label="Command palette">
+            <div id="cmd-modal">
+              <input id="cmd-input" type="text" placeholder="Search commands and sheets…" aria-label="Command search" autocomplete="off">
+              <div id="cmd-results" role="listbox"></div>
+            </div>
+          </div>
+
+          {workbook_tag}
+          <script>
+        {JS}
+          </script>
+        </body>
+        </html>
+        '''
+    )
+
+
+def main() -> None:
+    original = HTML_PATH.read_text(encoding="utf-8")
+    workbook_tag = extract_workbook_tag(original)
+    new_html = build_html(workbook_tag)
+    HTML_PATH.write_text(new_html, encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()
