@@ -1134,7 +1134,7 @@ JS = textwrap.dedent(
       hiddenCols: new Set(),
       search: '',
       page: 1,
-      pageSize: 25,
+      pageSize: 250,
       groupBy: null,
       groupCollapsed: new Set(),
       compareRows: new Set(),
@@ -2673,7 +2673,7 @@ JS = textwrap.dedent(
 
       const sel = document.createElement('select');
       sel.id = 'rows-per-page';
-      [10, 25, 50, 100].forEach(n => {
+      [10, 25, 50, 100, 250].forEach(n => {
         const o = document.createElement('option');
         o.value = n;
         o.textContent = n + ' / page';
