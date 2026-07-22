@@ -1843,6 +1843,13 @@ JS = textwrap.dedent(
       return /common[\s/_-]*core|core[\s/_-]*features|core[\s/_-]*components/i.test((header || '').toString());
     }
 
+    // Sparse freeform remark columns (a blank cell here genuinely means "no note"
+    // for that row, not "same note as the row above"). Forward-filling these
+    // leaks one row's note across every subsequent blank row.
+    function isFreeTextHeader(header) {
+      return /\bstatus\b|\bnotes?\b|description|comment|dependenc/i.test((header || '').toString());
+    }
+
     function isEthWanWifiRouterHeader(header) {
       return /ethwan|wifi.*router/i.test((header || '').toString());
     }
@@ -1932,7 +1939,7 @@ JS = textwrap.dedent(
     }
 
     function forwardFillRows(rows, headers) {
-      const denyFill = [isCommonCoreHeader];
+      const denyFill = [isCommonCoreHeader, isFreeTextHeader];
       const fillCols = headers.map((h, i) => {
         const emptyCount = rows.filter(r => !(r[i] || '').toString().trim()).length;
         const emptyRate = emptyCount / Math.max(rows.length, 1);
@@ -2586,7 +2593,7 @@ JS = textwrap.dedent(
           a.rel = 'noopener';
           a.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Link';
           td.appendChild(a);
-        } else if (h.toLowerCase().includes('status') && val) {
+        } else if (h.toLowerCase().includes('status') && val && val.length <= 20) {
           const badge = document.createElement('span');
           const icons = { required: '✓', optional: '○', deprecated: '⊘' };
           const lower = val.toLowerCase();
