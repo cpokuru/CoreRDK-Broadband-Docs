@@ -1843,6 +1843,14 @@ JS = textwrap.dedent(
       return /common[\s/_-]*core|core[\s/_-]*features|core[\s/_-]*components/i.test((header || '').toString());
     }
 
+    // These columns are part of the hierarchical Excel grouping (a feature's Feature
+    // Subset / Detailed Feature List / Component Repo only appear once, on the first
+    // row of that group). Sorting by them breaks that grouping and scatters rows in
+    // a way that looks "random", so header-click sorting is disabled for these.
+    function isSortDisabledHeader(header) {
+      return /feature[\s/_-]*subset|detailed[\s/_-]*feature[\s/_-]*list|component[\s/_-]*repo/i.test((header || '').toString());
+    }
+
     // Sparse freeform remark columns (a blank cell here genuinely means "no note"
     // for that row, not "same note as the row above"). Forward-filling these
     // leaks one row's note across every subsequent blank row.
@@ -1889,9 +1897,10 @@ JS = textwrap.dedent(
         data = data.filter(d => d.row.some(c => fuzzyMatch((c || '').toString(), state.search)));
       }
 
-      if (state.sortCols.length) {
+      const activeSortCols = state.sortCols.filter(s => !isSortDisabledHeader(sheet.headers[s.col]));
+      if (activeSortCols.length) {
         data.sort((a, b) => {
-          for (const { col, dir } of state.sortCols) {
+          for (const { col, dir } of activeSortCols) {
             const va = (a.row[col] || '').toString();
             const vb = (b.row[col] || '').toString();
             const n = va.localeCompare(vb, undefined, { numeric: true, sensitivity: 'base' });
@@ -2422,7 +2431,13 @@ JS = textwrap.dedent(
           th.style.minWidth = state.colWidths[i] + 'px';
         }
 
-        const sortInfo = state.sortCols.find(s => s.col === i);
+        const sortDisabled = isSortDisabledHeader(h);
+        if (sortDisabled) {
+          th.style.cursor = 'default';
+          th.title = 'Sorting is disabled for this column to preserve feature grouping';
+        }
+
+        const sortInfo = sortDisabled ? undefined : state.sortCols.find(s => s.col === i);
         const sortPriority = state.sortCols.findIndex(s => s.col === i) + 1;
 
         const label = document.createElement('span');
@@ -2442,6 +2457,7 @@ JS = textwrap.dedent(
         }
 
         th.onclick = (e) => {
+          if (sortDisabled) return;
           if (e.target.closest('select') || e.target.closest('.col-resize')) return;
           if (e.shiftKey) {
             const existing = state.sortCols.find(s => s.col === i);
@@ -2454,6 +2470,7 @@ JS = textwrap.dedent(
           }
           applyFilters();
         };
+
 
         const filledRowsForDropdown = forwardFillRows(sheet.rows, sheet.headers);
         const vals = [...new Set(filledRowsForDropdown.map(r => (r[i] || '').toString()).filter(v => v.trim()))].sort((a, b) =>
