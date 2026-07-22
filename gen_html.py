@@ -1713,18 +1713,13 @@ JS = textwrap.dedent(
       return /common[\\s/_-]*core|core[\\s/_-]*features/i.test((header || '').toString());
     }
 
-    function isCoreFilterValue(value) {
-      const v = (value || '').toString().trim();
-      return /^core(?:\b|$)/i.test(v) && !/^non.?core/i.test(v);
-    }
-
     function isEthWanWifiRouterHeader(header) {
-      return /ethwan[\s/_-]*wifi[\s/_-]*router/i.test((header || '').toString());
+      return /ethwan|wifi.*router/i.test((header || '').toString());
     }
 
     function getAutoHiddenCols(sheet) {
       const hasCommonCoreFilter = Object.entries(state.colFilters).some(([col, val]) =>
-        val && val !== '__all__' && isCommonCoreHeader(sheet.headers[col]) && isCoreFilterValue(val)
+        val && val !== '__all__' && isCommonCoreHeader(sheet.headers[col])
       );
       if (!hasCommonCoreFilter) return new Set();
       const autoHidden = new Set();
@@ -1743,7 +1738,10 @@ JS = textwrap.dedent(
         if (val && val !== '__all__') {
           const filterValue = val.trim();
           if (isCommonCoreHeader(sheet.headers[col])) {
-            data = data.filter(d => (((sheet.rows[d.origIdx] || [])[col] || '').toString().trim()) === filterValue);
+            data = data.filter(d => {
+              const rawValue = (((sheet.rows[d.origIdx] || [])[col]) || '').toString().trim();
+              return rawValue === filterValue;
+            });
           } else {
             data = data.filter(d => (d.row[col] || '').toString().trim() === filterValue);
           }
@@ -1804,11 +1802,13 @@ JS = textwrap.dedent(
     }
 
     function forwardFillRows(rows, headers) {
+      const denyFill = [isCommonCoreHeader];
       const fillCols = headers.map((h, i) => {
         const emptyCount = rows.filter(r => !(r[i] || '').toString().trim()).length;
         const emptyRate = emptyCount / Math.max(rows.length, 1);
         const isKnown = /sub-?system|feature.?name|feature.?subset|network.?util|category/i.test(h);
-        return ((emptyRate > 0.4 || isKnown) && !isCommonCoreHeader(h)) ? i : -1;
+        const isDenied = denyFill.some(match => match(h));
+        return ((emptyRate > 0.4 || isKnown) && !isDenied) ? i : -1;
       }).filter(i => i >= 0);
 
       const lastSeen = {};
