@@ -1774,9 +1774,13 @@ JS = textwrap.dedent(
     }
 
     function forwardFillRows(rows, headers) {
-      const fillCols = headers.map((h, i) => i).filter(i =>
-        /sub-?system/i.test(headers[i]) || /feature.?name/i.test(headers[i])
-      );
+      const fillCols = headers.map((h, i) => {
+        const emptyCount = rows.filter(r => !(r[i] || '').toString().trim()).length;
+        const emptyRate = emptyCount / Math.max(rows.length, 1);
+        const isKnown = /sub-?system|feature.?name|network.?util|category/i.test(h);
+        return (emptyRate > 0.4 || isKnown) ? i : -1;
+      }).filter(i => i >= 0);
+
       const lastSeen = {};
       return rows.map(row => {
         const newRow = [...row];
@@ -2346,6 +2350,7 @@ JS = textwrap.dedent(
       const start = (state.page - 1) * state.pageSize;
       const end = start + state.pageSize;
       const pageData = state.filteredData.slice(start, end);
+      const filledForDisplay = forwardFillRows(sheet.rows, sheet.headers);
 
       const shouldGroup = state.groupBy !== null && !state.search && !Object.values(state.colFilters).some(v => v && v !== '__all__');
       if (shouldGroup) {
@@ -2371,10 +2376,10 @@ JS = textwrap.dedent(
           };
           tbody.appendChild(gr);
 
-          if (!collapsed) rows.forEach(d => tbody.appendChild(buildRow(d, visHeaders)));
+          if (!collapsed) rows.forEach(d => tbody.appendChild(buildRow({ row: filledForDisplay[d.origIdx], origIdx: d.origIdx }, visHeaders)));
         });
       } else {
-        pageData.forEach(d => tbody.appendChild(buildRow(d, visHeaders)));
+        pageData.forEach(d => tbody.appendChild(buildRow({ row: filledForDisplay[d.origIdx], origIdx: d.origIdx }, visHeaders)));
       }
 
       if (!pageData.length) {
