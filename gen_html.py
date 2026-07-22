@@ -1709,6 +1709,31 @@ JS = textwrap.dedent(
       return false;
     }
 
+    function isCommonCoreHeader(header) {
+      return /common[\\s/_-]*core|core[\\s/_-]*features/i.test((header || '').toString());
+    }
+
+    function isCoreFilterValue(value) {
+      const v = (value || '').toString().trim();
+      return /^core(?:\b|$)/i.test(v) && !/^non.?core/i.test(v);
+    }
+
+    function isEthWanWifiRouterHeader(header) {
+      return /ethwan[\s/_-]*wifi[\s/_-]*router/i.test((header || '').toString());
+    }
+
+    function getAutoHiddenCols(sheet) {
+      const hasCommonCoreFilter = Object.entries(state.colFilters).some(([col, val]) =>
+        val && val !== '__all__' && isCommonCoreHeader(sheet.headers[col]) && isCoreFilterValue(val)
+      );
+      if (!hasCommonCoreFilter) return new Set();
+      const autoHidden = new Set();
+      sheet.headers.forEach((h, i) => {
+        if (isEthWanWifiRouterHeader(h)) autoHidden.add(i);
+      });
+      return autoHidden;
+    }
+
     function applyFilters() {
       const sheet = getActiveSheet();
       const filledRows = forwardFillRows(sheet.rows, sheet.headers);
@@ -1716,7 +1741,12 @@ JS = textwrap.dedent(
 
       Object.entries(state.colFilters).forEach(([col, val]) => {
         if (val && val !== '__all__') {
-          data = data.filter(d => (d.row[col] || '').toString().trim() === val.trim());
+          const filterValue = val.trim();
+          if (isCommonCoreHeader(sheet.headers[col])) {
+            data = data.filter(d => (((sheet.rows[d.origIdx] || [])[col] || '').toString().trim()) === filterValue);
+          } else {
+            data = data.filter(d => (d.row[col] || '').toString().trim() === filterValue);
+          }
         }
       });
 
@@ -1778,7 +1808,7 @@ JS = textwrap.dedent(
         const emptyCount = rows.filter(r => !(r[i] || '').toString().trim()).length;
         const emptyRate = emptyCount / Math.max(rows.length, 1);
         const isKnown = /sub-?system|feature.?name|feature.?subset|network.?util|category/i.test(h);
-        return (emptyRate > 0.4 || isKnown) ? i : -1;
+        return ((emptyRate > 0.4 || isKnown) && !isCommonCoreHeader(h)) ? i : -1;
       }).filter(i => i >= 0);
 
       const lastSeen = {};
@@ -2215,7 +2245,8 @@ JS = textwrap.dedent(
       const sheet = getActiveSheet();
       const headers = sheet.headers;
       const table = document.getElementById('data-table');
-      const visHeaders = headers.map((h, i) => ({ h, i })).filter(x => !state.hiddenCols.has(x.i));
+      const autoHiddenCols = getAutoHiddenCols(sheet);
+      const visHeaders = headers.map((h, i) => ({ h, i })).filter(x => !state.hiddenCols.has(x.i) && !autoHiddenCols.has(x.i));
       const thead = table.querySelector('thead');
       const tbody = table.querySelector('tbody');
       thead.innerHTML = '';
@@ -2764,8 +2795,9 @@ JS = textwrap.dedent(
     // ===== Export =====
     function exportCSV() {
       const sheet = getActiveSheet();
-      const visHeaders = sheet.headers.filter((_, i) => !state.hiddenCols.has(i));
-      const visIdxs = sheet.headers.map((_, i) => i).filter(i => !state.hiddenCols.has(i));
+      const autoHiddenCols = getAutoHiddenCols(sheet);
+      const visHeaders = sheet.headers.filter((_, i) => !state.hiddenCols.has(i) && !autoHiddenCols.has(i));
+      const visIdxs = sheet.headers.map((_, i) => i).filter(i => !state.hiddenCols.has(i) && !autoHiddenCols.has(i));
       const rows = [visHeaders, ...state.filteredData.map(d => visIdxs.map(i => d.row[i] || ''))];
       const csv = rows.map(r => r.map(c => '"' + c.toString().replace(/"/g, '""') + '"').join(',')).join('\n');
       download('export.csv', csv, 'text/csv');
