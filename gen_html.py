@@ -1447,16 +1447,10 @@ JS = textwrap.dedent(
           btn.className = 'sidebar-action-btn';
           btn.textContent = label;
           btn.onclick = () => {
-            const sheet = getActiveSheet();
-            const match = sheet.rows
-              .map(r => (r[statusIdx] || '').toString())
-              .find(v => v.toLowerCase().includes(label.toLowerCase()));
-            if (match) {
-              state.colFilters[statusIdx] = match;
-              state.page = 1;
-              applyFilters();
-              toast('Filtered status: ' + label);
-            }
+            state.colFilters[statusIdx] = label;
+            state.page = 1;
+            applyFilters();
+            toast('Filtered status: ' + label);
           };
           container.appendChild(btn);
         });
@@ -1717,11 +1711,12 @@ JS = textwrap.dedent(
 
     function applyFilters() {
       const sheet = getActiveSheet();
-      let data = sheet.rows.map((row, i) => ({ row, origIdx: i }));
+      const filledRows = forwardFillRows(sheet.rows, sheet.headers);
+      let data = filledRows.map((row, i) => ({ row, origIdx: i, displayRow: sheet.rows[i] }));
 
       Object.entries(state.colFilters).forEach(([col, val]) => {
         if (val && val !== '__all__') {
-          data = data.filter(d => (d.row[col] || '').toString() === val);
+          data = data.filter(d => (d.row[col] || '').toString().trim() === val.trim());
         }
       });
 
@@ -1741,10 +1736,10 @@ JS = textwrap.dedent(
         });
       }
 
-      state.filteredData = data;
+      state.filteredData = data.map(d => ({ row: d.displayRow, origIdx: d.origIdx }));
 
       const announce = document.getElementById('sr-announce');
-      if (announce) announce.textContent = `${data.length} rows found`;
+      if (announce) announce.textContent = `${state.filteredData.length} rows found`;
 
       renderTable();
       renderPagination();
@@ -1765,9 +1760,39 @@ JS = textwrap.dedent(
       return value || fallback;
     }
 
+    function resizeCanvas(canvas) {
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      if (w > 0 && h > 0 && (canvas.width !== w || canvas.height !== h)) {
+        canvas.width = w;
+        canvas.height = h;
+        delete canvas._animState;
+        delete canvas._animVersion;
+        delete canvas._barAnim;
+        delete canvas._barAnimVersion;
+      }
+    }
+
+    function forwardFillRows(rows, headers) {
+      const fillCols = headers.map((h, i) => i).filter(i =>
+        /sub-?system/i.test(headers[i]) || /feature.?name/i.test(headers[i])
+      );
+      const lastSeen = {};
+      return rows.map(row => {
+        const newRow = [...row];
+        fillCols.forEach(ci => {
+          const v = (row[ci] || '').toString().trim();
+          if (v) lastSeen[ci] = v;
+          else if (lastSeen[ci]) newRow[ci] = lastSeen[ci];
+        });
+        return newRow;
+      });
+    }
+
     function renderDonutChart() {
       const canvas = document.getElementById('donut-canvas');
       if (!canvas) return;
+      resizeCanvas(canvas);
       const sheet = getActiveSheet();
       const ctx = canvas.getContext('2d');
       const W = canvas.width;
@@ -1796,10 +1821,10 @@ JS = textwrap.dedent(
       const total = entries.reduce((s, [, v]) => s + v, 0);
       if (!entries.length) return;
 
-      // Layout
-      const cx = 120;
-      const cy = 150;
-      const R = 108;
+      // Dynamic layout based on canvas dimensions
+      const cx = Math.round(W * 0.22);
+      const cy = Math.round(H / 2);
+      const R = Math.round(Math.min(cx, cy) * 0.85);
       const r = Math.round(R * 0.52);
 
       // Build segments
@@ -1896,7 +1921,7 @@ JS = textwrap.dedent(
         }
 
         // Legend (right side)
-        const legendX = 252;
+        const legendX = cx * 2 + R + 20;
         const legendStartY = 18;
         const rowH = 26;
         const swatchSize = 12;
@@ -2026,6 +2051,7 @@ JS = textwrap.dedent(
     function renderBarChart() {
       const canvas = document.getElementById('bar-canvas');
       if (!canvas) return;
+      resizeCanvas(canvas);
       const ctx = canvas.getContext('2d');
       const W = canvas.width;
       const H = canvas.height;
@@ -2257,7 +2283,8 @@ JS = textwrap.dedent(
           applyFilters();
         };
 
-        const vals = [...new Set(sheet.rows.map(r => (r[i] || '').toString()).filter(v => v.trim()))].sort((a, b) =>
+        const filledRowsForDropdown = forwardFillRows(sheet.rows, sheet.headers);
+        const vals = [...new Set(filledRowsForDropdown.map(r => (r[i] || '').toString()).filter(v => v.trim()))].sort((a, b) =>
           a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
         );
         if (vals.length < 50 && vals.length > 0) {
