@@ -1777,7 +1777,7 @@ JS = textwrap.dedent(
       const fillCols = headers.map((h, i) => {
         const emptyCount = rows.filter(r => !(r[i] || '').toString().trim()).length;
         const emptyRate = emptyCount / Math.max(rows.length, 1);
-        const isKnown = /sub-?system|feature.?name|network.?util|category/i.test(h);
+        const isKnown = /sub-?system|feature.?name|feature.?subset|network.?util|category/i.test(h);
         return (emptyRate > 0.4 || isKnown) ? i : -1;
       }).filter(i => i >= 0);
 
