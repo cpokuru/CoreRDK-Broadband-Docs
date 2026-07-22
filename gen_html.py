@@ -1,21 +1,14 @@
+import shutil
 from pathlib import Path
-import re
 import textwrap
 
 
 ROOT = Path(__file__).parent
-HTML_PATH = ROOT / "docs" / "index.html"
-
-
-def extract_workbook_tag(content: str) -> str:
-    match = re.search(
-        r'(<script id="workbook-data" type="application/json">.*?</script>)',
-        content,
-        re.DOTALL,
-    )
-    if not match:
-        raise RuntimeError("Could not find workbook-data script tag in docs/index.html")
-    return match.group(1)
+DOCS_DIR = ROOT / "docs"
+HTML_PATH = DOCS_DIR / "index.html"
+# GitHub Pages (when publishing from /docs) only serves files inside docs/.
+# sync_workbook() below makes sure the .xlsx ends up there regardless of
+# whether you keep your working copy in docs/ or at the repo root.
 
 
 CSS = textwrap.dedent(
@@ -564,6 +557,29 @@ CSS = textwrap.dedent(
       border-radius: var(--radius-sm); height: 14px; margin: 4px 0;
     }
     @keyframes shimmer { to { background-position: -200% 0; } }
+
+/* Workbook load / drop panel */
+#workbook-load-panel { display: none; padding: 40px 16px; }
+#workbook-drop-zone {
+  border: 2px dashed var(--border-medium);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  padding: 56px 24px;
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+#workbook-drop-zone:hover, #workbook-drop-zone:focus, #workbook-drop-zone.dragover {
+  border-color: var(--brand-primary);
+  background: var(--bg-hover);
+  outline: none;
+}
+#workbook-drop-zone .wlp-icon { font-size: 2.5rem; margin-bottom: 12px; }
+#workbook-drop-zone .wlp-title { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+#workbook-drop-zone .wlp-sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; }
+#workbook-drop-zone.wlp-error .wlp-sub { color: var(--danger); }
 
     /* Link cells — button-style with external icon */
     .cell-link {
@@ -1187,13 +1203,127 @@ JS = textwrap.dedent(
     }
 
     // ===== Data Loading =====
+    // The workbook is parsed live in the browser (via SheetJS) instead of being baked
+    // into the page at build time. To ship a new year's data, just replace the .xlsx
+    // file sitting next to this HTML file — no regeneration step required.
+    // If the filename changes, either update WORKBOOK_FILE below, or simply use the
+    // "Load Workbook" button / drag-and-drop panel to pick the new file at runtime.
+    const WORKBOOK_FILE = 'RDK-B_Component_List_2026.xlsx';
+
+    function normalizeCell(v) {
+      if (v === null || v === undefined) return '';
+      return String(v).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    }
+
+    function parseWorkbookBuffer(buf) {
+      if (typeof XLSX === 'undefined') throw new Error('XLSX library failed to load (check your network/CDN access)');
+      const wb = XLSX.read(buf, { type: 'array' });
+      return wb.SheetNames.map(name => {
+        const ws = wb.Sheets[name];
+        const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+        const headers = (aoa[0] || []).map(normalizeCell);
+        const rows = aoa.slice(1)
+          .map(r => headers.map((_, i) => normalizeCell(r[i])))
+          .filter(r => r.some(c => c.trim() !== ''));
+        return { name, headers, rows };
+      });
+    }
+
+    async function loadWorkbookFromUrl(url) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const buf = await res.arrayBuffer();
+      return parseWorkbookBuffer(buf);
+    }
+
+    async function loadWorkbookFromFile(file) {
+      const buf = await file.arrayBuffer();
+      return parseWorkbookBuffer(buf);
+    }
+
+    function deriveWorkbookLabel(sourceName) {
+      const m = (sourceName || '').match(/(19|20)\d{2}/);
+      return 'RDK-B Component List' + (m ? ' ' + m[0] : '');
+    }
+
+    function applyWorkbookLabel(label) {
+      state.workbookLabel = label;
+      document.title = label;
+      const logo = document.querySelector('.logo-text');
+      if (logo) logo.textContent = label;
+      const welcomeTitle = document.querySelector('.welcome-title');
+      if (welcomeTitle) welcomeTitle.textContent = label;
+      const footerLabel = document.querySelector('#page-footer .footer-inner > span:first-child');
+      if (footerLabel) footerLabel.textContent = label;
+    }
+
     function loadData() {
-      const workbookElId = 'workbook' + '-data';
-      const el = document.getElementById(workbookElId);
-      if (!el) throw new Error('Missing workbook JSON script tag');
-      const wb = JSON.parse(el.textContent);
-      if (!wb || !Array.isArray(wb.sheets)) throw new Error('Invalid workbook structure');
-      state.sheets = wb.sheets;
+      loadWorkbookFromUrl(WORKBOOK_FILE)
+        .then(sheets => initWithSheets(sheets, WORKBOOK_FILE))
+        .catch(err => {
+          console.warn('Auto-load of "' + WORKBOOK_FILE + '" failed, falling back to manual picker:', err);
+          showWorkbookLoadPanel('Could not auto-load "' + WORKBOOK_FILE + '". Drop the .xlsx file here, or click to browse.', true);
+        });
+    }
+
+    function showWorkbookLoadPanel(message, isError) {
+      document.getElementById('skeleton-loader').style.display = 'none';
+      document.getElementById('main-content').style.display = 'none';
+      const panel = document.getElementById('workbook-load-panel');
+      const zone = document.getElementById('workbook-drop-zone');
+      const msgEl = document.getElementById('workbook-load-msg');
+      if (msgEl && message) msgEl.textContent = message;
+      if (zone) zone.classList.toggle('wlp-error', !!isError);
+      if (panel) panel.style.display = 'block';
+    }
+
+    function hideWorkbookLoadPanel() {
+      const panel = document.getElementById('workbook-load-panel');
+      if (panel) panel.style.display = 'none';
+    }
+
+    function bindWorkbookLoader() {
+      const fileInput = document.getElementById('workbook-file-input');
+      const dropZone = document.getElementById('workbook-drop-zone');
+      const browseBtn = document.getElementById('workbook-drop-browse-btn');
+      const navLoadBtn = document.getElementById('load-workbook-btn');
+
+      const openPicker = () => fileInput.click();
+      if (navLoadBtn) navLoadBtn.onclick = () => { showWorkbookLoadPanel('Drop an .xlsx file here, or click to browse.', false); };
+      if (browseBtn) browseBtn.onclick = openPicker;
+      if (dropZone) {
+        dropZone.onclick = openPicker;
+        dropZone.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPicker(); } };
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) handleWorkbookFile(e.dataTransfer.files[0]);
+        });
+      }
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) handleWorkbookFile(e.target.files[0]);
+      });
+    }
+
+    function handleWorkbookFile(file) {
+      loadWorkbookFromFile(file)
+        .then(sheets => {
+          initWithSheets(sheets, file.name);
+          toast('Loaded ' + file.name);
+        })
+        .catch(err => {
+          console.error('Failed to parse workbook:', err);
+          showWorkbookLoadPanel('Could not read "' + file.name + '" — make sure it\'s a valid .xlsx file.', true);
+        });
+    }
+
+    function initWithSheets(sheets, sourceLabel) {
+      if (!Array.isArray(sheets) || !sheets.length) throw new Error('Invalid workbook structure');
+      state.sheets = sheets;
+      applyWorkbookLabel(deriveWorkbookLabel(sourceLabel));
+      hideWorkbookLoadPanel();
 
       const hash = parseHash();
       const maxIndex = Math.max(0, state.sheets.length - 1);
@@ -1710,7 +1840,7 @@ JS = textwrap.dedent(
     }
 
     function isCommonCoreHeader(header) {
-      return /common[\\s/_-]*core|core[\\s/_-]*features/i.test((header || '').toString());
+      return /common[\s/_-]*core|core[\s/_-]*features|core[\s/_-]*components/i.test((header || '').toString());
     }
 
     function isEthWanWifiRouterHeader(header) {
@@ -2895,6 +3025,7 @@ JS = textwrap.dedent(
       document.getElementById('copy-url-btn').onclick = copyURL;
       document.getElementById('print-btn').onclick = () => window.print();
       document.getElementById('group-toggle-btn').onclick = toggleGrouping;
+      bindWorkbookLoader();
 
       const searchInput = document.getElementById('search-input');
       let searchTimeout;
@@ -3033,7 +3164,7 @@ JS = textwrap.dedent(
 ).strip()
 
 
-def build_html(workbook_tag: str) -> str:
+def build_html() -> str:
     return textwrap.dedent(
         f'''\
         <!DOCTYPE html>
@@ -3047,6 +3178,7 @@ def build_html(workbook_tag: str) -> str:
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
           <style>
         {CSS}
           </style>
@@ -3068,6 +3200,9 @@ def build_html(workbook_tag: str) -> str:
             <button class="nav-btn" id="export-json-btn" aria-label="Export JSON"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> <span>JSON</span></button>
             <button class="nav-btn" id="copy-url-btn" aria-label="Copy URL"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> <span>Share</span></button>
             <button class="nav-btn" id="print-btn" aria-label="Print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+            <button class="nav-btn" id="load-workbook-btn" aria-label="Load a different Excel workbook"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> <span>Load Workbook</span></button>
+            <input type="file" id="workbook-file-input" accept=".xlsx,.xls" style="display:none">
+          
             <button class="nav-btn" id="dark-toggle" aria-label="Toggle dark mode"><svg id="dark-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
           </nav>
 
@@ -3108,6 +3243,14 @@ def build_html(workbook_tag: str) -> str:
               <div id="sheet-tabs" role="tablist" aria-label="Sheet selection"></div>
 
               <div id="content-area">
+                <div id="workbook-load-panel">
+                  <div id="workbook-drop-zone" tabindex="0" role="button" aria-label="Choose or drop an Excel workbook">
+                    <div class="wlp-icon">📊</div>
+                    <div class="wlp-title">Load the RDK-B component workbook</div>
+                    <div class="wlp-sub" id="workbook-load-msg">Drop an .xlsx file here, or click to browse. Next year, just swap in the new file — no rebuild needed.</div>
+                    <button class="toolbar-btn" id="workbook-drop-browse-btn" type="button">📁 Choose File</button>
+                  </div>
+                </div>
                 <div id="skeleton-loader">
                   <div class="skeleton" style="height:22px;width:40%;margin-bottom:12px"></div>
                   <div class="skeleton" style="height:84px;margin-bottom:12px"></div>
@@ -3223,7 +3366,6 @@ def build_html(workbook_tag: str) -> str:
             </div>
           </div>
 
-          {workbook_tag}
           <script>
         {JS}
           </script>
@@ -3233,11 +3375,29 @@ def build_html(workbook_tag: str) -> str:
     )
 
 
+WORKBOOK_NAME = "RDK-B_Component_List_2026.xlsx"
+
+
+def sync_workbook() -> None:
+    dest = DOCS_DIR / WORKBOOK_NAME
+    if dest.exists():
+        print(f"{dest} already present — nothing to sync.")
+        return
+    source = ROOT / WORKBOOK_NAME
+    if not source.exists():
+        print(f"WARNING: no {WORKBOOK_NAME} found in {DOCS_DIR} or {ROOT}. "
+              f"The page's 'Load Workbook' picker will still work, but auto-fetch will fail "
+              f"until a matching .xlsx is placed in {DOCS_DIR}.")
+        return
+    shutil.copy2(source, dest)
+    print(f"Copied {source} -> {dest}")
+
+
 def main() -> None:
-    original = HTML_PATH.read_text(encoding="utf-8")
-    workbook_tag = extract_workbook_tag(original)
-    new_html = build_html(workbook_tag)
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    new_html = build_html()
     HTML_PATH.write_text(new_html, encoding="utf-8")
+    sync_workbook()
 
 
 if __name__ == "__main__":
